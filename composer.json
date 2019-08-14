@@ -1,0 +1,16 @@
+{
+    "name": "OpenMageModuleFostering/DigitalPianism_Abandonedcarts",
+    "type": "magento-module",
+    "license": "OSL-v3.0",
+    "homepage": "",
+    "description": "Allows administrators to notice customers with abandoned carts.",
+    "authors": [
+    {
+        "name": "Digital Pianism",
+        "email": "contact@digital-pianism.com"
+    }
+],
+    "suggest": {
+        "magento-hackathon/magento-composer-installer": "*"
+    }
+}

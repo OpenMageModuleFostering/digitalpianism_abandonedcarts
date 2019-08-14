@@ -1,0 +1,130 @@
+<?xml version="1.0"?>
+
+<config>
+
+    <modules>
+        <DigitalPianism_Abandonedcarts>
+            <version>0.1.10</version>
+        </DigitalPianism_Abandonedcarts>
+    </modules>
+	
+	<admin>
+        <routers>
+		
+            <abandonedcarts_admin>
+				<use>admin</use>
+				<args>
+					<module>DigitalPianism_Abandonedcarts</module>
+					<frontName>abandonedcarts_admin</frontName>
+				</args>
+            </abandonedcarts_admin>	
+			
+        </routers>
+	</admin>
+	
+	<frontend>
+		<!-- Translation file -->
+		<translate>
+            <modules>
+                <DigitalPianism_Abandonedcarts>
+                    <files>
+                        <default>DigitalPianism_Abandonedcarts.csv</default>
+                    </files>
+                </DigitalPianism_Abandonedcarts>
+            </modules>
+        </translate>
+	</frontend>
+	
+	<adminhtml>
+		<!-- Backend translation file -->
+        <translate>
+            <modules>
+                <DigitalPianism_Abandonedcarts>
+                    <files>
+                        <default>DigitalPianism_Abandonedcarts.csv</default>
+                    </files>
+                </DigitalPianism_Abandonedcarts>
+            </modules>
+        </translate>
+    </adminhtml>
+	
+	<global>
+		<blocks>
+            <abandonedcarts>
+                <class>DigitalPianism_Abandonedcarts_Block</class>
+            </abandonedcarts>
+        </blocks>
+		
+		<helpers>
+            <abandonedcarts>
+                <class>DigitalPianism_Abandonedcarts_Helper</class>
+            </abandonedcarts>
+        </helpers>
+	
+        <models>
+        	<abandonedcarts>
+        		<class>DigitalPianism_Abandonedcarts_Model</class>
+        	</abandonedcarts>
+        </models>
+
+		<template>
+			<email>
+				<sales_abandonedcarts_email_template translate="label" module="abandonedcarts">
+					<label>Abandoned Cart Template</label> 
+					<file>digitalpianism/sales_abandonedcarts.html</file> 
+					<type>html</type>
+				</sales_abandonedcarts_email_template>
+				<sales_abandonedcarts_email_template_sale translate="label" module="abandonedcarts">
+					<label>Abandoned Cart Sale Template</label> 
+					<file>digitalpianism/sales_abandonedcarts_sale.html</file> 
+					<type>html</type>
+				</sales_abandonedcarts_email_template_sale>
+			</email>
+		</template>
+		
+		<resources>       
+			<abandonedcarts_setup>
+				<setup>
+					<module>DigitalPianism_Abandonedcarts</module>
+				</setup>
+				<connection>
+					<use>core_setup</use>
+				</connection>
+			</abandonedcarts_setup>
+			<abandonedcarts_write>
+				<connection>
+					<use>core_write</use>
+				</connection>
+			</abandonedcarts_write>
+			<abandonedcarts_read>
+				<connection>
+					<use>core_read</use>
+				</connection>
+			</abandonedcarts_read>
+		</resources>
+        
+    </global>
+	
+	<crontab> 
+		<jobs> 
+			<digitalpianism_abandonedcarts_send>
+				<schedule>
+					<cron_expr>0 0 * * *</cron_expr>
+				</schedule>
+				<run>
+					<model>abandonedcarts/observer::sendAbandonedCartsEmail</model>
+					<model>abandonedcarts/observer::sendAbandonedCartsSaleEmail</model>
+				</run>
+			</digitalpianism_abandonedcarts_send> 
+		</jobs> 
+	</crontab>
+	
+	<default>
+		<sales>
+			<abandonedcarts>               
+				<notify_delay>20</notify_delay>        
+			</abandonedcarts>       
+		</sales>
+	</default>
+
+</config>
