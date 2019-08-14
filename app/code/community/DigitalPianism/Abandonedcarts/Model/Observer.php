@@ -141,13 +141,10 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 		}
 	}
 	
-	public function sendSaleEmails()
+	public function sendSaleEmails($dryrun,$testemail)
 	{
 		try
-		{
-			if (Mage::helper('abandonedcarts')->getDryRun()) $dryrun = true;
-			if (Mage::helper('abandonedcarts')->getTestEmail()) $testemail = Mage::helper('abandonedcarts')->getTestEmail();
-			
+		{			
 			// Get the transactional email template
 			$templateId = Mage::getStoreConfig('abandonedcartsconfig/options/email_template_sale');
 			// Get the sender
@@ -213,13 +210,10 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 		}
 	}
 	
-	public function sendEmails()
+	public function sendEmails($dryrun,$testemail)
 	{
 		try
-		{
-			if (Mage::helper('abandonedcarts')->getDryRun()) $dryrun = true;
-			if (Mage::helper('abandonedcarts')->getTestEmail()) $testemail = Mage::helper('abandonedcarts')->getTestEmail();
-			
+		{		
 			// Get the transactional email template
 			$templateId = Mage::getStoreConfig('abandonedcartsconfig/options/email_template');
 			// Get the sender
@@ -294,6 +288,8 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 	{
 		try
 		{
+			if (Mage::helper('abandonedcarts')->getDryRun()) $dryrun = true;
+			if (Mage::helper('abandonedcarts')->getTestEmail()) $testemail = Mage::helper('abandonedcarts')->getTestEmail();
 			if (Mage::helper('abandonedcarts')->isSaleEnabled())
 			{
 				$this->setToday();
@@ -375,7 +371,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 							Mage::getSingleton('core/resource_iterator')->walk($collection->getSelect(), array(array($this, 'generateSaleRecipients')));
 							
 							// Send the emails
-							$this->sendSaleEmails();
+							$this->sendSaleEmails($dryrun,$testemail);
 						}
 					}
 				}
@@ -482,6 +478,9 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 							// Call iterator walk method with collection query string and callback method as parameters
 							// Has to be used to handle massive collection instead of foreach
 							Mage::getSingleton('core/resource_iterator')->walk($collection->getSelect(), array(array($this, 'generateRecipients')));
+							
+							// Send the emails
+							$this->sendEmails($dryrun,$testemail);
 						}
 					}
 				}
