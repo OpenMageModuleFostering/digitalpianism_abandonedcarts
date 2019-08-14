@@ -41,6 +41,11 @@ class DigitalPianism_Abandonedcarts_Model_Notifier extends Mage_Core_Model_Abstr
 	/**
 	 * @var
 	 */
+	protected $_originalArea;
+
+	/**
+	 * @var
+	 */
 	protected $_originalStoreId;
 
 	/**
@@ -273,6 +278,12 @@ class DigitalPianism_Abandonedcarts_Model_Notifier extends Mage_Core_Model_Abstr
 
 			// Store Id
 			Mage::app()->setCurrentStore($recipient['store_id']);
+			// Area
+			if ($recipient['store_id'] === 0) {
+				Mage::getDesign()->setArea('adminhtml');
+			} else {
+				Mage::getDesign()->setArea('frontend');
+			}
 			// Get the transactional email template
 			$templateId = Mage::getStoreConfig('abandonedcartsconfig/email/email_template_sale');
 			// Get the sender
@@ -360,6 +371,13 @@ class DigitalPianism_Abandonedcarts_Model_Notifier extends Mage_Core_Model_Abstr
 
 			// Store ID
 			Mage::app()->setCurrentStore($recipient['store_id']);
+			// Area
+			if ($recipient['store_id'] === 0) {
+				Mage::getDesign()->setArea('adminhtml');
+			} else {
+				Mage::getDesign()->setArea('frontend');
+			}
+
 			// Get the transactional email template
 			$templateId = Mage::getStoreConfig('abandonedcartsconfig/email/email_template');
 			// Get the sender
@@ -435,7 +453,7 @@ class DigitalPianism_Abandonedcarts_Model_Notifier extends Mage_Core_Model_Abstr
 	 * @param boolean
 	 * @param string
 	 */
-	public function sendAbandonedCartsSaleEmail($dryrun = false, $testemail = null, $emails = array())
+	public function sendAbandonedCartsSaleEmail(Mage_Cron_Model_Schedule $schedule = null, $dryrun = false, $testemail = null, $emails = array())
 	{
 		if (Mage::helper('abandonedcarts')->getDryRun()) {
 			$dryrun = true;
@@ -449,6 +467,8 @@ class DigitalPianism_Abandonedcarts_Model_Notifier extends Mage_Core_Model_Abstr
 		$this->_customerGroups = $this->_customerGroups ? $this->_customerGroups : Mage::helper('abandonedcarts')->getCustomerGroupsLimitation();
 		// Original store id
 		$this->_originalStoreId = Mage::app()->getStore()->getId();
+		// Original area
+		$this->_originalArea = Mage::getDesign()->getArea();
 		try
 		{
 			if (Mage::helper('abandonedcarts')->isSaleEnabled()) {
@@ -489,12 +509,14 @@ class DigitalPianism_Abandonedcarts_Model_Notifier extends Mage_Core_Model_Abstr
 				}
 				$this->_sendSaleEmails($dryrun, $testemail);
 			}
+			Mage::getDesign()->setArea($this->_originalArea);
 			Mage::app()->setCurrentStore($this->_originalStoreId);
 
 			return count($this->_getSaleRecipients());
 		}
 		catch (Exception $e)
 		{
+			Mage::getDesign()->setArea($this->_originalArea);
 			Mage::app()->setCurrentStore($this->_originalStoreId);
 			Mage::helper('abandonedcarts')->log(sprintf("%s->Error: %s", __METHOD__, $e->getMessage()));
 			return 0;
@@ -508,7 +530,7 @@ class DigitalPianism_Abandonedcarts_Model_Notifier extends Mage_Core_Model_Abstr
 	 * @param string $testemail
 	 * @internal param if $boolean dryrun is set to true, it won't send emails and won't alter quotes
 	 */
-	public function sendAbandonedCartsEmail($nodate = false, $dryrun = false, $testemail = null, $emails = array())
+	public function sendAbandonedCartsEmail(Mage_Cron_Model_Schedule $schedule = null, $nodate = false, $dryrun = false, $testemail = null, $emails = array())
 	{
 		if (Mage::helper('abandonedcarts')->getDryRun()) {
 			$dryrun = true;
@@ -522,6 +544,8 @@ class DigitalPianism_Abandonedcarts_Model_Notifier extends Mage_Core_Model_Abstr
 		$this->_customerGroups = $this->_customerGroups ? $this->_customerGroups : Mage::helper('abandonedcarts')->getCustomerGroupsLimitation();
 		// Original store id
 		$this->_originalStoreId = Mage::app()->getStore()->getId();
+		// Original area
+		$this->_originalArea = Mage::getDesign()->getArea();
 		try
 		{
 			if (Mage::helper('abandonedcarts')->isEnabled()) {
@@ -575,12 +599,14 @@ class DigitalPianism_Abandonedcarts_Model_Notifier extends Mage_Core_Model_Abstr
 				// Send the emails
 				$this->_sendEmails($dryrun, $testemail);
 			}
+			Mage::getDesign()->setArea($this->_originalArea);
 			Mage::app()->setCurrentStore($this->_originalStoreId);
 
 			return count($this->_getRecipients());
 		}
 		catch (Exception $e)
 		{
+			Mage::getDesign()->setArea($this->_originalArea);
 			Mage::app()->setCurrentStore($this->_originalStoreId);
 			Mage::helper('abandonedcarts')->log(sprintf("%s->Error: %s", __METHOD__, $e->getMessage()));
 			return 0;

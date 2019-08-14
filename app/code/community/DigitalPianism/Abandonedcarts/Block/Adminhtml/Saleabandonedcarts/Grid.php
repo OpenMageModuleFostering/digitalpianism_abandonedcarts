@@ -53,19 +53,19 @@ class DigitalPianism_Abandonedcarts_Block_Adminhtml_Saleabandonedcarts_Grid exte
                 array(
                     'product_ids'   =>  'GROUP_CONCAT(e.entity_id)',
                     'product_names'   =>  'GROUP_CONCAT(catalog_flat.name)',
-                    'product_prices'   =>  'SUM(quote_items.price)',
-                    'product_special_prices'   =>  'SUM(IFNULL(catalog_flat.special_price,quote_items.price))',
+                    'product_prices'   =>  'SUM(catalog_flat.price * quote_items.qty)',
+                    'product_special_prices'   =>  'SUM(IFNULL(catalog_flat.special_price,quote_items.price) * quote_items.qty)',
                 )
             );
 
-            $collection->getSelect()->having("SUM(quote_items.price) < SUM(IFNULL(catalog_flat.special_price,quote_items.price))");
+            $collection->getSelect()->having("SUM(quote_items.price) > SUM(IFNULL(catalog_flat.special_price,quote_items.price))");
         } else {
             $collection->getSelect()->columns(
                 array(
                     'product_ids'   =>  'GROUP_CONCAT(e.entity_id)',
                     'product_names'   =>  'GROUP_CONCAT(catalog_name.value)',
-                    'product_prices'   =>  'SUM(quote_items.price)',
-                    'product_special_prices'   =>  'SUM(IFNULL(catalog_sprice.value,quote_items.price))',
+                    'product_prices'   =>  'SUM(catalog_price.value * quote_items.qty)',
+                    'product_special_prices'   =>  'SUM(IFNULL(catalog_sprice.value,quote_items.price) * quote_items.qty)',
                 )
             );
 
@@ -78,6 +78,8 @@ class DigitalPianism_Abandonedcarts_Block_Adminhtml_Saleabandonedcarts_Grid exte
 
     protected function _prepareColumns()
     {
+        $currencyCode = $this->_getStore()->getCurrentCurrencyCode();
+        
         $this->addColumn('customer_email', array(
             'header' => Mage::helper('abandonedcarts')->__('Customer Email'),
             'index' => 'customer_email',
@@ -113,12 +115,16 @@ class DigitalPianism_Abandonedcarts_Block_Adminhtml_Saleabandonedcarts_Grid exte
         $this->addColumn('product_prices', array(
             'header' => Mage::helper('abandonedcarts')->__('Cart Regular Total'),
             'index' => 'product_prices',
+            'type'      => 'price',
+            'currency_code'  => $currencyCode,
             'filter'    => false
         ));
 
         $this->addColumn('product_special_prices', array(
             'header' => Mage::helper('abandonedcarts')->__('Cart Sale Total'),
             'index' => 'product_special_prices',
+            'type'      => 'price',
+            'currency_code'  => $currencyCode,
             'filter'    =>  false
         ));
 
@@ -213,6 +219,20 @@ class DigitalPianism_Abandonedcarts_Block_Adminhtml_Saleabandonedcarts_Grid exte
     {
         $field = $column->getFilterIndex() ? $column->getFilterIndex() : $column->getIndex();
         $value = $column->getFilter()->getValue();
-        $collection->getSelect()->where("$field > '" . $value['from']->toString('Y-MM-dd HH:mm:ss') . "' AND $field < '" . $value['to']->toString('Y-MM-dd HH:mm:ss') . "'");
+
+        $where = false;
+
+        if (is_array($value) && array_key_exists('from', $value)) {
+            $where = sprintf("%s > '%s'", $field, $value['from']->toString('Y-MM-dd HH:mm:ss'));
+            if (array_key_exists('to', $value)) {
+                $where .= sprintf(" AND %s < '%s'", $field, $value['to']->toString('Y-MM-dd HH:mm:ss'));
+            }
+        } elseif (is_array($value) && array_key_exists('to', $value)) {
+            $where = sprintf("%s < '%s'", $field, $value['to']->toString('Y-MM-dd HH:mm:ss'));
+        }
+
+        if ($where) {
+            $collection->getSelect()->where($where);
+        }
     }
 }
