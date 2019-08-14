@@ -12,12 +12,14 @@
             <!-- [ middle starts here] -->
             <tr>
                 <td valign="top">
-                    <p style="font-size:12px; line-height:16px; margin:0;">
-						Dear {{var firstname}},<br />
-						You have abandoned a {{var productname}} {{depend extraproductcount}} and {{var extraproductcount}} more products{{/depend}} in your cart.<br/>
-						
-						Follow this link and log in to finalize your purchase: {{config path="web/unsecure/base_url"}}
-					</p>
+                    <div>
+                        <p>Dear {{var firstname}},</p>
+                        <p>You have abandoned the following product in your shopping bag:</p>
+                        <img src="{{var productimage}}" alt="{{var productname}}" />
+                        <p>{{var productname}}</p>
+                        <p>{{depend extraproductcount}} As well as {{var extraproductcount}} more products{{/depend}}.</p>
+                        <p>Follow this link and log in to finalize your purchase: {{config path="web/unsecure/base_url"}}</p>
+					</div>
 				</td>
 			</tr>
 		</table>

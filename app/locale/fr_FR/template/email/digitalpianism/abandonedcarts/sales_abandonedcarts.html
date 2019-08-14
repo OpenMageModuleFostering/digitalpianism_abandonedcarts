@@ -1,4 +1,4 @@
-<!--@subject {{var fullname}} Abandoned Sale Products In Your Shopping Bag! @-->
+<!--@subject {{var fullname}} Abandoned Products In Your Shopping Bag! @-->
 <body style="background:#F6F6F6; font-family:Verdana, Arial, Helvetica, sans-serif; font-size:12px; margin:0; padding:0;">
 <div style="background:#F6F6F6; font-family:Verdana, Arial, Helvetica, sans-serif; font-size:12px; margin:0; padding:0;">
 <table cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -12,19 +12,12 @@
             <!-- [ middle starts here] -->
             <tr>
                 <td valign="top">
-                    <div>
-                        <p>Dear {{var firstname}},</p>
-                        <p>You have abandoned the following product in your shopping bag:</p>
-                        <img src="{{var productimage}}" alt="{{var productname}}" />
-                        <p>{{var productname}}</p>
-						<p>It was {{var cartprice}} and now is {{var specialprice}}.</p>
-						<p>
-						{{depend extraproductcount}}
-						Purchase the {{var extraproductcount}} other sale products in your cart and save {{var discount}} on your order.
-						{{/depend}}
-                        </p>
-						<p>Follow this link and log in to finalize your purchase with the new special price: {{config path="web/unsecure/base_url"}}</p>
-					</div>
+                    <p style="font-size:12px; line-height:16px; margin:0;">
+						Ch&egrave;r(e) {{var firstname}},<br />
+						Vous avez abandonn&eacute; un(e) {{var productname}} {{depend extraproductcount}} et {{var extraproductcount}} autres produits{{/depend}} dans votre panier.<br/>
+						
+						Suivez ce lien et connectez-vous pour finaliser votre achat: {{config path="web/unsecure/base_url"}}
+					</p>
 				</td>
 			</tr>
 		</table>

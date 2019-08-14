@@ -12,19 +12,18 @@
             <!-- [ middle starts here] -->
             <tr>
                 <td valign="top">
-                    <div>
-                        <p>Dear {{var firstname}},</p>
-                        <p>You have abandoned the following product in your shopping bag:</p>
-                        <img src="{{var productimage}}" alt="{{var productname}}" />
-                        <p>{{var productname}}</p>
-						<p>It was {{var cartprice}} and now is {{var specialprice}}.</p>
-						<p>
+                    <p style="font-size:12px; line-height:16px; margin:0;">
+						Ch&egrave;r(e) {{var firstname}},<br />
+						Vous avez abandonn&eacute; un(e) {{var productname}} dans votre panier.<br/>
+						
+						Son prix &eacute;tait de {{var cartprice}} et est maintenant de {{var specialprice}}.<br/>
+						
 						{{depend extraproductcount}}
-						Purchase the {{var extraproductcount}} other sale products in your cart and save {{var discount}} on your order.
+						Achetez les {{var extraproductcount}} autre produits en promotion dans votre panier et &eacute;conomisez {{var discount}} sur votre commande.<br/>
 						{{/depend}}
-                        </p>
-						<p>Follow this link and log in to finalize your purchase with the new special price: {{config path="web/unsecure/base_url"}}</p>
-					</div>
+						
+						Suivez ce lien et connectez vous pour finaliser votre achat en profitant des promotions: {{config path="web/unsecure/base_url"}}
+					</p>
 				</td>
 			</tr>
 		</table>

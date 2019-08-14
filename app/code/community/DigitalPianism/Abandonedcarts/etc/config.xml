@@ -4,7 +4,7 @@
 
     <modules>
         <DigitalPianism_Abandonedcarts>
-            <version>0.3.0</version>
+            <version>0.3.1</version>
         </DigitalPianism_Abandonedcarts>
     </modules>
 	
@@ -76,12 +76,12 @@
 			<email>
 				<abandonedcartsconfig_options_email_template translate="label" module="abandonedcarts">
 					<label>Abandoned Cart Template</label> 
-					<file>digitalpianism/sales_abandonedcarts.html</file> 
+					<file>digitalpianism/abandonedcarts/sales_abandonedcarts.html</file>
 					<type>html</type>
 				</abandonedcartsconfig_options_email_template>
 				<abandonedcartsconfig_options_email_template_sale translate="label" module="abandonedcarts">
 					<label>Abandoned Cart Sale Template</label> 
-					<file>digitalpianism/sales_abandonedcarts_sale.html</file> 
+					<file>digitalpianism/abandonedcarts/sales_abandonedcarts_sale.html</file>
 					<type>html</type>
 				</abandonedcartsconfig_options_email_template_sale>
 			</email>
