@@ -21,7 +21,7 @@ class DigitalPianism_Abandonedcarts_Helper_Data extends Mage_Core_Helper_Abstrac
      */
     public function isEnabled()
 	{
-		return Mage::getStoreConfig('abandonedcartsconfig/options/enable');
+		return Mage::getStoreConfigFlag('abandonedcartsconfig/options/enable');
 	}
 
     /**
@@ -29,7 +29,7 @@ class DigitalPianism_Abandonedcarts_Helper_Data extends Mage_Core_Helper_Abstrac
      */
     public function isSaleEnabled()
 	{
-		return Mage::getStoreConfig('abandonedcartsconfig/options/enable_sale');
+		return Mage::getStoreConfigFlag('abandonedcartsconfig/options/enable_sale');
 	}
 
     /**
@@ -37,7 +37,7 @@ class DigitalPianism_Abandonedcarts_Helper_Data extends Mage_Core_Helper_Abstrac
      */
     public function getDryRun()
 	{
-		return Mage::getStoreConfig('abandonedcartsconfig/options/dryrun');
+		return Mage::getStoreConfigFlag('abandonedcartsconfig/options/dryrun');
 	}
 
     /**

@@ -1,20 +1,108 @@
 <?xml version="1.0"?>
 <package>
     <name>DigitalPianism_Abandonedcarts</name>
-    <version>0.1.11</version>
+    <version>0.1.12</version>
     <stability>stable</stability>
     <license uri="http://opensource.org/licenses/osl-3.0.php">OSL v3.0</license>
     <channel>community</channel>
     <extends/>
-    <summary>Allows administrators to notice customers with abandoned carts.</summary>
-    <description>This extension allows store managers to automatically notice customers with abandoned carts after a customizable number of days via email.&#xD;
+    <summary>Adds the possibility to notify customers with abandoned carts.</summary>
+    <description>&lt;h2&gt;Overview&lt;/h2&gt;&#xD;
 &#xD;
-Another email can also be sent if one of the abandoned products goes on sale.</description>
-    <notes>- Fix default configuration values.</notes>
+This module includes two functionalities:&#xD;
+&lt;ul&gt;&#xD;
+&lt;li&gt;The first one is an automatic email notification for customers who abandoned their carts after a customizable number of days&lt;/li&gt;&#xD;
+&lt;li&gt;The second one is an automatic email notification when products which are in an abandoned cart go on sale&lt;/li&gt;&#xD;
+&lt;/ul&gt;&#xD;
+&#xD;
+&lt;p&gt;With this extension, you can increase your sales with follow-up emails in order to bring back customers who did not checkout the first time they added products to their bag.&lt;/p&gt;&#xD;
+&#xD;
+&lt;p&gt;Here is an example of the first functionality's email:&lt;/p&gt;&#xD;
+&#xD;
+&lt;p&gt;&#xD;
+Dear John,&lt;br&gt;&#xD;
+You have abandoned a Apple iPad 8GB and 2 more products in your cart.&lt;br&gt;&#xD;
+&#xD;
+Follow this link and log in to finalize your purchase: http://www.mystore.com/&#xD;
+&lt;/p&gt;&#xD;
+&lt;p&gt;Here is an example of the second functionality's email:&lt;/p&gt;&#xD;
+&lt;p&gt;&#xD;
+Dear John,&lt;br&gt;&#xD;
+You have abandoned a Apple iPad 8GB in your cart.&lt;br&gt;&#xD;
+&#xD;
+It was 200&#x20AC; and now is 150&#x20AC;.&lt;br&gt;&#xD;
+&#xD;
+Purchase the 2 other sale products in your cart and save 85&#x20AC; on your order.&lt;br&gt;&#xD;
+&#xD;
+Follow this link and log in to finalize your purchase with the new special price: http://www.mystore.com/&#xD;
+&lt;/p&gt;&#xD;
+&#xD;
+&lt;h2&gt;Configuration&lt;/h2&gt;&#xD;
+&#xD;
+&lt;p&gt;For this module to work properly, you need to enable Flat Catalog Product under System &amp;gt; Configuration &amp;gt; Catalog &amp;gt; Catalog.&lt;/p&gt;&#xD;
+&#xD;
+&lt;h3&gt;Emails Design&lt;/h3&gt;&#xD;
+&#xD;
+&lt;ol&gt;&#xD;
+&lt;li&gt;In the backend, access System &amp;gt; Transactional Emails&lt;/li&gt;&#xD;
+&lt;li&gt;Click on the "Add New Template" button&lt;/li&gt;&#xD;
+&lt;li&gt;Under the "Load Default Template" section, choose "Abandoned Cart Template" for Template and "English (United States)" for Locale&lt;/li&gt;&#xD;
+&lt;li&gt;Click the "Load Template" button and design your "Abandoned Cart" email to match with your store emails.&lt;/li&gt;&#xD;
+&lt;li&gt;Repeat step 1 - 4 choosing "Abandoned Cart Sale Template" in step 3 to design the "Abandoned Cart Sale" email.&lt;/li&gt;&#xD;
+&lt;/ol&gt;&#xD;
+&#xD;
+&lt;h3&gt;Module Configuration&lt;/h3&gt;&#xD;
+&#xD;
+Access the module configuration under System &amp;gt; Configuration &amp;gt; Digital Pianism &amp;gt; Abandoned Carts Emails.&#xD;
+&#xD;
+&lt;ul&gt;&#xD;
+&lt;li&gt;Enable Abandoned Carts Notification: setting this option to Yes will enabled the email notification for customers who abandoned their carts.&lt;/li&gt;&#xD;
+&lt;li&gt;Sender Name: here you can provide the sender name of the notification email&lt;/li&gt;&#xD;
+&lt;li&gt;Sender Email: here you can provide the sender email of the notification email&lt;/li&gt;&#xD;
+&lt;li&gt;Email Template for Unaltered Abandoned Carts: here you have to choose the email template you created previously for the "Abandoned Carts" email.&lt;/li&gt;&#xD;
+&lt;li&gt;Send Abandoned Cart Email After: in days, this is the delay before the email is sent. For example, if you provide 7 in this field, the abandoned cart notification email will be sent 7 days after the customer abandoned its cart.&lt;/li&gt;&#xD;
+&lt;li&gt;Enable Sale Abandoned Carts Notification: setting this option to Yes will enabled the email notification for customers who have abandoned carts with sale products.&lt;/li&gt;&#xD;
+&lt;li&gt;Email Template for Abandoned Carts Sale: here you have to choose the email template you created previously for the "Abandoned Carts Sale" email.&lt;/li&gt;&#xD;
+&lt;li&gt;Dry Run: setting this parameter to yes will log the emails supposed to be sent in the /var/log/digitalpianism_abandonedcarts.log file and will not send the email notifications.&lt;/li&gt;&#xD;
+&lt;li&gt;Test email: only works with dry run, providing a test email can be used with the send button to only send notifications to the customer with this email address. Useful for testing purposes&lt;/li&gt;&#xD;
+&lt;li&gt;Send button: clicking this button will manually send the abandoned carts email notifications regardless the delay you provided. This can be use with dry run set to Yes to test the extension&lt;/li&gt;&#xD;
+&lt;/ul&gt;&#xD;
+&#xD;
+&lt;p&gt;N.B.: for log files to be created and updated, you must enable the logs under System &amp;gt; Configuration &amp;gt; Advanced &amp;gt; Developer &amp;gt; Log Settings &amp;gt; Enable = Yes&lt;/p&gt;&#xD;
+&#xD;
+&lt;p&gt;N.B. 2: Please note that abandoning carts without being logged in will result in no email being sent for this abandoned cart because there is no way we can retrieve not logged in customer's email.&lt;/p&gt;&#xD;
+&#xD;
+Save the configuration.&#xD;
+&#xD;
+&lt;p&gt;The emails are sent everyday at midnight via a cron job.&lt;/p&gt;&#xD;
+&#xD;
+&lt;h3&gt;Email Variables&lt;/h3&gt;&#xD;
+&#xD;
+&lt;p&gt;The following variables are being used in the email templates that come with the extension.&lt;/p&gt;&#xD;
+&lt;p&gt;For the abandoned carts email:&lt;/p&gt;&#xD;
+&lt;ul&gt;&#xD;
+&lt;li&gt;{{var firstname}} : first name of the customer&lt;/li&gt;&#xD;
+&lt;li&gt;{{var productname}}: name of the first product in the abandoned cart&lt;/li&gt;&#xD;
+&lt;li&gt;{{var extraproductcount}}: number of extra products in the abandoned cart&lt;/li&gt;&#xD;
+&lt;/ul&gt;&#xD;
+&lt;p&gt;For the abandoned carts for sale products email:&lt;/p&gt;&#xD;
+&lt;ul&gt;&#xD;
+&lt;li&gt;{{var firstname}} : first name of the customer&lt;/li&gt;&#xD;
+&lt;li&gt;{{var productname}}: name of the first product in the abandoned cart&lt;/li&gt;&#xD;
+&lt;li&gt;{{var cartprice}}: original price of the first product on sale in the abandoned cart.&lt;/li&gt;&#xD;
+&lt;li&gt;{{var specialprice}}: sale price of the first product on sale in the abandoned cart.&lt;/li&gt;&#xD;
+&lt;li&gt;{{var discount}}: possible discount if the whole abandoned cart is purchased.&lt;/li&gt;&#xD;
+&lt;/ul&gt;&#xD;
+&#xD;
+&lt;h3&gt;Manually Send The Notifications&lt;/h3&gt;&#xD;
+&#xD;
+&lt;p&gt;To manually trigger the notification system, please access System &amp;gt; Configuration &amp;gt; Digital Pianism &amp;gt; Abandoned carts email and click on the "Send" button&lt;/p&gt;&#xD;
+&lt;p&gt;Please note that this functionality will send abandoned carts notification regardless the delay you provided, all possible abandoned carts emails will be sent.&lt;/p&gt;</description>
+    <notes>- Bug Fixes</notes>
     <authors><author><name>Digital Pianism</name><user>digitalpianism</user><email>contact@digital-pianism.com</email></author></authors>
-    <date>2014-12-30</date>
-    <time>10:52:51</time>
-    <contents><target name="magecommunity"><dir name="DigitalPianism"><dir name="Abandonedcarts"><dir name="Block"><dir name="Adminhtml"><dir name="System"><dir name="Config"><dir name="Form"><file name="Button.php" hash="d5a6f33d47d067fc09a7b7fe8eacd287"/></dir></dir></dir></dir></dir><dir name="Helper"><file name="Data.php" hash="4eda7b865d023206a58a4178f7db81a5"/></dir><dir name="Model"><file name="Observer.php" hash="49baa4ce3a82b6b70c63dcce1c8a5e21"/></dir><dir name="controllers"><dir name="Adminhtml"><file name="AbandonedcartsController.php" hash="ca68e31a5e41f036451a409a7eeaaa16"/></dir></dir><dir name="etc"><file name="adminhtml.xml" hash="8ddca513c0ed7e034c476f3e026ceda8"/><file name="config.xml" hash="17ea6d587df418c1210db8278ee16b16"/><file name="system.xml" hash="793efac0feb3c123a1c8869b21f302f1"/></dir><dir name="sql"><dir name="abandonedcarts_setup"><file name="install-0.0.1.php" hash="851338e4a710b5d94fead688b065f4b5"/><file name="upgrade-0.0.1-0.0.2.php" hash="0227c009e49b97bcf3f34f84c49f0927"/></dir></dir></dir></dir></target><target name="mageetc"><dir name="modules"><file name="DigitalPianism_Abandonedcarts.xml" hash="8a7657855486c68d548db4ba48e083d2"/></dir></target><target name="magelocale"><dir name="en_US"><file name="DigitalPianism_AbandonedCarts.csv" hash="4e17b6cae58dd1cdcd43b1113e2e09f4"/><dir name="template"><dir name="email"><dir name="digitalpianism"><file name="sales_abandonedcarts.html" hash="30565f91c47913465fd184a214c14b23"/><file name="sales_abandonedcarts_sale.html" hash="3cdee557727cb0166741062e5fdcf06f"/></dir></dir></dir></dir></target><target name="magedesign"><dir name="adminhtml"><dir name="default"><dir name="default"><dir name="template"><dir name="digitalpianism"><dir name="abandonedcarts"><dir name="system"><dir name="config"><file name="button.phtml" hash="8f7e673ea52cd81b616cac01b1022990"/></dir></dir></dir></dir></dir></dir></dir></dir></target></contents>
+    <date>2015-07-06</date>
+    <time>15:29:01</time>
+    <contents><target name="magecommunity"><dir name="DigitalPianism"><dir name="Abandonedcarts"><dir name="Block"><dir name="Adminhtml"><dir name="System"><dir name="Config"><dir name="Form"><file name="Button.php" hash="d5a6f33d47d067fc09a7b7fe8eacd287"/></dir></dir></dir></dir></dir><dir name="Helper"><file name="Data.php" hash="1a32f521774d20636c9861850fd32594"/></dir><dir name="Model"><file name="Observer.php" hash="90b9b844ccb8fd93873b034d7a1ed60a"/><dir name="Sales"><dir name="Resource"><file name="Quote.php" hash="3b2f9f24a74a6ea3b6851d64bd6ae5ba"/></dir></dir></dir><dir name="controllers"><dir name="Adminhtml"><file name="AbandonedcartsController.php" hash="ca68e31a5e41f036451a409a7eeaaa16"/></dir></dir><dir name="etc"><file name="adminhtml.xml" hash="8ddca513c0ed7e034c476f3e026ceda8"/><file name="config.xml" hash="48765d9eaca0c0dd56b9187c437ab347"/><file name="system.xml" hash="793efac0feb3c123a1c8869b21f302f1"/></dir><dir name="sql"><dir name="abandonedcarts_setup"><file name="install-0.0.1.php" hash="851338e4a710b5d94fead688b065f4b5"/><file name="upgrade-0.0.1-0.0.2.php" hash="0227c009e49b97bcf3f34f84c49f0927"/></dir></dir></dir></dir></target><target name="mageetc"><dir name="modules"><file name="DigitalPianism_Abandonedcarts.xml" hash="8a7657855486c68d548db4ba48e083d2"/></dir></target><target name="magedesign"><dir name="adminhtml"><dir name="default"><dir name="default"><dir name="template"><dir name="digitalpianism"><dir name="abandonedcarts"><dir name="system"><dir name="config"><file name="button.phtml" hash="8f7e673ea52cd81b616cac01b1022990"/></dir></dir></dir></dir></dir></dir></dir></dir></target><target name="magelocale"><dir name="en_US"><dir name="template"><dir name="email"><dir name="digitalpianism"><dir name="abandonedcarts"><file name="sales_abandonedcarts.html" hash="30565f91c47913465fd184a214c14b23"/><file name="sales_abandonedcarts_sale.html" hash="3cdee557727cb0166741062e5fdcf06f"/></dir></dir></dir></dir><file name="DigitalPianism_Abandonedcarts.csv" hash="4e17b6cae58dd1cdcd43b1113e2e09f4"/></dir></target></contents>
     <compatible/>
     <dependencies><required><php><min>4.1.0</min><max>6.0.0</max></php></required></dependencies>
 </package>

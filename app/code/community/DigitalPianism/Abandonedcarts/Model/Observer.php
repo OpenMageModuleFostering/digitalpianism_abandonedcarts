@@ -232,7 +232,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				// Save only if dryrun is false or if the test email is set and found
 				if (!$dryrun || (isset($testemail) && $email == $testemail))
 				{
-					$quote->save();
+					$quote->getResource()->saveAttribute($quote,array('abandoned_sale_notified'));
 				}
 			}
 		}
@@ -305,7 +305,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				// Save only if dryrun is false or if the test email is set and found
 				if (!$dryrun || (isset($testemail) && $email == $testemail))
 				{
-					$quote->save();
+					$quote->getResource()->saveAttribute($quote,array('abandoned_notified'));
 				}
 			}
 		}
@@ -357,6 +357,13 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 								->reset(Zend_Db_Select::COLUMNS)
 								->columns(array('e.entity_id AS product_id',
 												'e.sku',
+												/* Code if catalog flat is disabled
+												'catalog_name.value as product_name',
+												'catalog_price.value as product_price',
+												'catalog_special_price.value as product_special_price',
+												'catalog_special_from.value as product_special_from_date',
+												'catalog_special_to.value as product_special_to_date',
+												*/
 												'catalog_flat.name as product_name',
 												'catalog_flat.price as product_price',
 												'catalog_flat.special_price as product_special_price',
@@ -383,6 +390,43 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 									array('catalog_flat' => Mage::getSingleton("core/resource")->getTableName('catalog_product_flat_'.$storeId)),
 									'catalog_flat.entity_id = e.entity_id',
 									null)
+									/* Code if catalog flat is disabled
+								// Product Name
+								->joinInner(
+									array('catalog_name'	=> Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_varchar')),
+									'catalog_name.entity_id = e.entity_id
+									AND attribute_id = (SELECT attribute_id FROM eav_attribute LEFT JOIN "eav_entity_type" ON eav_attribute.entity_type_id = eav_entity_type.entity_type_id WHERE eav_attribute.attribute_code = "name" AND eav_entity_type.entity_type_code = "catalog_product")
+									AND catalog_name.store_id = '.$storeId,
+									null)
+								// Product Price
+								->joinInner(
+									array('catalog_price'	=> Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_decimal')),
+									'catalog_price.entity_id = e.entity_id
+									AND attribute_id = (SELECT attribute_id FROM eav_attribute LEFT JOIN "eav_entity_type" ON eav_attribute.entity_type_id = eav_entity_type.entity_type_id WHERE eav_attribute.attribute_code = "price" AND eav_entity_type.entity_type_code = "catalog_product")
+									AND catalog_price.store_id = '.$storeId,
+									null)
+								// Product Special Price
+								->joinInner(
+									array('catalog_special_price'	=> Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_decimal')),
+									'catalog_special_price.entity_id = e.entity_id
+									AND attribute_id = (SELECT attribute_id FROM eav_attribute LEFT JOIN "eav_entity_type" ON eav_attribute.entity_type_id = eav_entity_type.entity_type_id WHERE eav_attribute.attribute_code = "special_price" AND eav_entity_type.entity_type_code = "catalog_product")
+									AND catalog_special_price.store_id = '.$storeId,
+									null)
+								// Product Special Price From
+								->joinInner(
+									array('catalog_special_from'	=> Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_datetime')),
+									'catalog_special_from.entity_id = e.entity_id
+									AND attribute_id = (SELECT attribute_id FROM eav_attribute LEFT JOIN "eav_entity_type" ON eav_attribute.entity_type_id = eav_entity_type.entity_type_id WHERE eav_attribute.attribute_code = "special_from" AND eav_entity_type.entity_type_code = "catalog_product")
+									AND catalog_special_from.store_id = '.$storeId,
+									null)
+								// Product Special Price To
+								->joinInner(
+									array('catalog_special_to'	=> Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_datetime')),
+									'catalog_special_to.entity_id = e.entity_id
+									AND attribute_id = (SELECT attribute_id FROM eav_attribute LEFT JOIN "eav_entity_type" ON eav_attribute.entity_type_id = eav_entity_type.entity_type_id WHERE eav_attribute.attribute_code = "special_to" AND eav_entity_type.entity_type_code = "catalog_product")
+									AND catalog_special_to.store_id = '.$storeId,
+									null)
+									*/
 								->joinInner(
 									array('catalog_enabled'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_int')),
 									'catalog_enabled.entity_id = e.entity_id AND catalog_enabled.attribute_id = '.$statusId.' AND catalog_enabled.value = 1',
@@ -474,6 +518,10 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 								->reset(Zend_Db_Select::COLUMNS)
 								->columns(array('e.entity_id AS product_id',
 												'e.sku',
+												/* Code if catalog flat is disabled
+												'catalog_name.value as product_name',
+												'catalog_price.value as product_price',
+												*/
 												'catalog_flat.name as product_name',
 												'catalog_flat.price as product_price',
 												'quote_table.entity_id as cart_id',
@@ -496,6 +544,22 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 									array('catalog_flat' => Mage::getSingleton("core/resource")->getTableName('catalog_product_flat_'.$storeId)),
 									'catalog_flat.entity_id = e.entity_id',
 									null)
+								/* Code if catalog flat is disabled
+								// Product Name
+								->joinInner(
+									array('catalog_name'	=> Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_varchar')),
+									'catalog_name.entity_id = e.entity_id
+									AND attribute_id = (SELECT attribute_id FROM eav_attribute LEFT JOIN "eav_entity_type" ON eav_attribute.entity_type_id = eav_entity_type.entity_type_id WHERE eav_attribute.attribute_code = "name" AND eav_entity_type.entity_type_code = "catalog_product")
+									AND catalog_name.store_id = '.$storeId,
+									null)
+								// Product Price
+								->joinInner(
+									array('catalog_price'	=> Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_decimal')),
+									'catalog_price.entity_id = e.entity_id
+									AND attribute_id = (SELECT attribute_id FROM eav_attribute LEFT JOIN "eav_entity_type" ON eav_attribute.entity_type_id = eav_entity_type.entity_type_id WHERE eav_attribute.attribute_code = "price" AND eav_entity_type.entity_type_code = "catalog_product")
+									AND catalog_price.store_id = '.$storeId,
+									null)
+									*/
 								->joinInner(
 									array('catalog_enabled'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_int')),
 									'catalog_enabled.entity_id = e.entity_id AND catalog_enabled.attribute_id = '.$statusId.' AND catalog_enabled.value = 1',

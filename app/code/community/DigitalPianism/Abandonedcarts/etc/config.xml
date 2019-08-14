@@ -4,7 +4,7 @@
 
     <modules>
         <DigitalPianism_Abandonedcarts>
-            <version>0.1.10</version>
+            <version>0.1.12</version>
         </DigitalPianism_Abandonedcarts>
     </modules>
 	
@@ -65,20 +65,26 @@
         	<abandonedcarts>
         		<class>DigitalPianism_Abandonedcarts_Model</class>
         	</abandonedcarts>
+			<sales_resource>
+				<rewrite>
+					<!-- Mage_Sales_Model_Resource_Quote -->
+					<quote>DigitalPianism_Abandonedcarts_Model_Sales_Resource_Quote</quote>
+				</rewrite>
+			</sales_resource>
         </models>
 
 		<template>
 			<email>
-				<sales_abandonedcarts_email_template translate="label" module="abandonedcarts">
+				<abandonedcartsconfig_options_email_template translate="label" module="abandonedcarts">
 					<label>Abandoned Cart Template</label> 
-					<file>digitalpianism/sales_abandonedcarts.html</file> 
+					<file>digitalpianism/abandonedcarts/sales_abandonedcarts.html</file> 
 					<type>html</type>
-				</sales_abandonedcarts_email_template>
-				<sales_abandonedcarts_email_template_sale translate="label" module="abandonedcarts">
+				</abandonedcartsconfig_options_email_template>
+				<abandonedcartsconfig_options_email_template_sale translate="label" module="abandonedcarts">
 					<label>Abandoned Cart Sale Template</label> 
-					<file>digitalpianism/sales_abandonedcarts_sale.html</file> 
+					<file>digitalpianism/abandonedcarts/sales_abandonedcarts_sale.html</file> 
 					<type>html</type>
-				</sales_abandonedcarts_email_template_sale>
+				</abandonedcartsconfig_options_email_template_sale>
 			</email>
 		</template>
 		
@@ -120,11 +126,16 @@
 	</crontab>
 	
 	<default>
-		<sales>
-			<abandonedcarts>               
-				<notify_delay>20</notify_delay>        
-			</abandonedcarts>       
-		</sales>
+		<abandonedcartsconfig>
+			<options>
+				<enable>0</enable>
+				<enable_sale>0</enable_sale>
+				<dryrun>0</dryrun>
+				<notify_delay>20</notify_delay>
+				<email_template>abandonedcartsconfig_options_email_template</email_template>
+				<email_template_sale>abandonedcartsconfig_options_email_template_sale</email_template_sale>
+			</options>
+		</abandonedcartsconfig>
 	</default>
 
 </config>
