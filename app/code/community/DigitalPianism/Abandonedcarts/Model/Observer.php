@@ -17,7 +17,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 		$store = Mage_Core_Model_App::ADMIN_STORE_ID;
 		$timezone = Mage::app()->getStore($store)->getConfig(Mage_Core_Model_Locale::XML_PATH_DEFAULT_TIMEZONE);
 		date_default_timezone_set($timezone);
-	
+
 		// Current date
 		$currentdate = date("Ymd");
 
@@ -26,7 +26,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 		$year = (int)substr($currentdate,0,4);
 
 		$date = array('year' => $year,'month' => $month,'day' => $day,'hour' => 23,'minute' => 59,'second' => 59);
-		
+
 		$today = new Zend_Date($date);
 		$today->setTimeZone("UTC");
 
@@ -73,14 +73,14 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 		// Test if the customer is already in the array
 		if (!array_key_exists($args['row']['customer_email'], $this->_recipients))
 		{
-			// Create an array of variables to assign to template 
-			$emailTemplateVariables = array(); 
-			
+			// Create an array of variables to assign to template
+			$emailTemplateVariables = array();
+
 			// Array that contains the data which will be used inside the template
-			$emailTemplateVariables['fullname'] = $args['row']['customer_firstname'].' '.$args['row']['customer_lastname']; 
+			$emailTemplateVariables['fullname'] = $args['row']['customer_firstname'].' '.$args['row']['customer_lastname'];
 			$emailTemplateVariables['firstname'] = $args['row']['customer_firstname'];
 			$emailTemplateVariables['productname'] = $args['row']['product_name'];
-					
+
 			// Assign the values to the array of recipients
 			$this->_recipients[$args['row']['customer_email']]['cartId'] = $args['row']['cart_id'];
 
@@ -95,7 +95,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 
 			// Add product image
 			$emailTemplateVariables['productimage'] = (string)Mage::helper('catalog/image')->init($_productCollection->getFirstItem(), 'image');
-			
+
 			$emailTemplateVariables['extraproductcount'] = 0;
 		}
 		else
@@ -127,36 +127,36 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			$fromDate = $this->_getToday();
 		}
 		else $fromDate = $args['row']['product_special_from_date'];
-		
+
 		// Do the same for the special to date
 		if (!array_key_exists('product_special_to_date',$args['row']) || !$args['row']['product_special_to_date'])
 		{
 			$toDate = $this->_getToday();
 		}
 		else $toDate = $args['row']['product_special_to_date'];
-		
+
 		// We need to ensure that the price in cart is higher than the new special price
 		// As well as the date comparison in case the sale is over or hasn't started
-		if ($args['row']['product_price_in_cart'] > 0.00 
-			&& $args['row']['product_special_price'] > 0.00 
+		if ($args['row']['product_price_in_cart'] > 0.00
+			&& $args['row']['product_special_price'] > 0.00
 			&& ($args['row']['product_price_in_cart'] > $args['row']['product_special_price'])
 			&& ($fromDate <= $this->_getToday())
 			&& ($toDate >= $this->_getToday()))
 		{
-			
+
 			// Test if the customer is already in the array
 			if (!array_key_exists($args['row']['customer_email'], $this->_saleRecipients))
 			{
-				// Create an array of variables to assign to template 
-				$emailTemplateVariables = array(); 
-				
+				// Create an array of variables to assign to template
+				$emailTemplateVariables = array();
+
 				// Array that contains the data which will be used inside the template
-				$emailTemplateVariables['fullname'] = $args['row']['customer_firstname'].' '.$args['row']['customer_lastname']; 
+				$emailTemplateVariables['fullname'] = $args['row']['customer_firstname'].' '.$args['row']['customer_lastname'];
 				$emailTemplateVariables['firstname'] = $args['row']['customer_firstname'];
-				$emailTemplateVariables['productname'] = $args['row']['product_name']; 
-				$emailTemplateVariables['cartprice'] = number_format($args['row']['product_price_in_cart'],2); 
+				$emailTemplateVariables['productname'] = $args['row']['product_name'];
+				$emailTemplateVariables['cartprice'] = number_format($args['row']['product_price_in_cart'],2);
 				$emailTemplateVariables['specialprice'] = number_format($args['row']['product_special_price'],2);
-				
+
 				// Assign the values to the array of recipients
 				$this->_saleRecipients[$args['row']['customer_email']]['cartId'] = $args['row']['cart_id'];
 
@@ -192,7 +192,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				}
 				$emailTemplateVariables['extraproductcount'] += 1;
 			}
-			
+
 			// Add currency codes to prices
 			$emailTemplateVariables['cartprice'] = Mage::helper('core')->currency($emailTemplateVariables['cartprice'], true, false);
 			$emailTemplateVariables['specialprice'] = Mage::helper('core')->currency($emailTemplateVariables['specialprice'], true, false);
@@ -200,7 +200,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			{
 				$emailTemplateVariables['discount'] = Mage::helper('core')->currency($emailTemplateVariables['discount'], true, false);
 			}
-	
+
 			// Assign the array of template variables
 			$this->_saleRecipients[$args['row']['customer_email']]['emailTemplateVariables'] = $emailTemplateVariables;
 		}
@@ -213,14 +213,14 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
     protected function _sendSaleEmails($dryrun,$testemail)
 	{
 		try
-		{			
+		{
 			// Get the transactional email template
 			$templateId = Mage::getStoreConfig('abandonedcartsconfig/options/email_template_sale');
 			// Get the sender
 			$sender = array();
 			$sender['email'] = Mage::getStoreConfig('abandonedcartsconfig/options/email');
 			$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
-			
+
 			// Send the emails via a loop
 			foreach ($this->_getSaleRecipients() as $email => $recipient)
 			{
@@ -248,7 +248,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				else
 				{
 					Mage::helper('abandonedcarts')->log(__METHOD__ . "sendAbandonedCartsSaleEmail: " . $email);
-					
+
 					// Send the email
 					Mage::getModel('core/email_template')
 							->sendTransactional(
@@ -259,13 +259,13 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 									$recipient['emailTemplateVariables'],
 									null);
 				}
-				
+
 				// Load the quote
 				$quote = Mage::getModel('sales/quote')->load($recipient['cartId']);
 
 				// We change the notification attribute
 				$quote->setAbandonedSaleNotified(1);
-				
+
 				// Save only if dryrun is false or if the test email is set and found
 				if (!$dryrun || (isset($testemail) && $email == $testemail))
 				{
@@ -286,14 +286,14 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
     protected function _sendEmails($dryrun,$testemail)
 	{
 		try
-		{		
+		{
 			// Get the transactional email template
 			$templateId = Mage::getStoreConfig('abandonedcartsconfig/options/email_template');
 			// Get the sender
 			$sender = array();
 			$sender['email'] = Mage::getStoreConfig('abandonedcartsconfig/options/email');
 			$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
-			
+
 			// Send the emails via a loop
 			foreach ($this->_getRecipients() as $email => $recipient)
 			{
@@ -357,7 +357,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 	 * @param boolean $dryrun if dryrun is set to true, it won't send emails and won't alter quotes
 	 * @param string $testemail email to test
 	 */
-	public function sendAbandonedCartsSaleEmail($dryrun = false, $testemail = null) 
+	public function sendAbandonedCartsSaleEmail($dryrun = false, $testemail = null)
 	{
 		try
 		{
@@ -369,7 +369,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			if (Mage::helper('abandonedcarts')->isSaleEnabled())
 			{
 				$this->_setToday();
-				
+
 				// Get the attribute id for the status attribute
 				$eavAttribute = Mage::getModel('eav/entity_attribute');
 				$statusId = $eavAttribute->getIdByCode('catalog_product', 'status');
@@ -378,7 +378,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				$spriceId = $eavAttribute->getIdByCode('catalog_product', 'special_price');
 				$spfromId = $eavAttribute->getIdByCode('catalog_product', 'special_from_date');
 				$sptoId = $eavAttribute->getIdByCode('catalog_product', 'special_to_date');
-				
+
 				// Loop through the stores
 				foreach (Mage::app()->getWebsites() as $website) {
 					// Get the website id
@@ -386,22 +386,22 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 					foreach ($website->getGroups() as $group) {
 						$stores = $group->getStores();
 						foreach ($stores as $store) {
-						
+
 							// Get the store id
 							$storeId = $store->getStoreId();
-				
+
 							// Init the store to be able to load the quote and the collections properly
 							Mage::app()->init($storeId,'store');
-							
+
 							// Get the product collection
 							$collection = Mage::getResourceModel('catalog/product_collection')->setStore($storeId);
-							
+
 							// Database TableNams
 							$eavEntityType = Mage::getSingleton("core/resource")->getTableName('eav_entity_type');
 							$eavAttribute = Mage::getSingleton("core/resource")->getTableName('eav_attribute');
-							
+
 							// If flat catalog is enabled
-							if (Mage::helper('catalog/product_flat')->isEnabled()) 
+							if (Mage::helper('catalog/product_flat')->isEnabled())
 							{
 								// First collection: carts with products that became on sale
 								// Join the collection with the required tables
@@ -512,13 +512,13 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 										null)
 									->order('quote_table.updated_at DESC');
 							}
-													
+
 							//$collection->printlogquery(true,true);
 							$collection->load();
-							
+
 							// Skip the rest of the code if the collection is empty
 							if ($collection->getSize() == 0)    continue;
-							
+
 							// Call iterator walk method with collection query string and callback method as parameters
 							// Has to be used to handle massive collection instead of foreach
 							Mage::getSingleton('core/resource_iterator')->walk($collection->getSelect(), array(array($this, 'generateSaleRecipients')));
@@ -553,11 +553,11 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 		{
 			if (Mage::helper('abandonedcarts')->isEnabled())
 			{
-				// Date handling	
+				// Date handling
 				$store = Mage_Core_Model_App::ADMIN_STORE_ID;
 				$timezone = Mage::app()->getStore($store)->getConfig(Mage_Core_Model_Locale::XML_PATH_DEFAULT_TIMEZONE);
 				date_default_timezone_set($timezone);
-				
+
 				// If the nodate parameter is set to false
 				if (!$nodate)
 				{
@@ -570,13 +570,13 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 					// We create a date in the future to handle all abandoned carts
 					$delay = date('Y-m-d H:i:s', strtotime("+7 day"));
 				}
-				
+
 				// Get the attribute id for several attributes
 				$eavAttribute = Mage::getModel('eav/entity_attribute');
 				$statusId = $eavAttribute->getIdByCode('catalog_product', 'status');
 				$nameId = $eavAttribute->getIdByCode('catalog_product', 'name');
 				$priceId = $eavAttribute->getIdByCode('catalog_product', 'price');
-				
+
 				// Loop through the stores
 				foreach (Mage::app()->getWebsites() as $website) {
 					// Get the website id
@@ -584,17 +584,17 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 					foreach ($website->getGroups() as $group) {
 						$stores = $group->getStores();
 						foreach ($stores as $store) {
-						
+
 							// Get the store id
 							$storeId = $store->getStoreId();
 							// Init the store to be able to load the quote and the collections properly
 							Mage::app()->init($storeId,'store');
-							
+
 							// Get the product collection
 							$collection = Mage::getResourceModel('catalog/product_collection')->setStore($storeId);
-							
+
 							// If flat catalog is enabled
-							if (Mage::helper('catalog/product_flat')->isEnabled()) 
+							if (Mage::helper('catalog/product_flat')->isEnabled())
 							{
 								// First collection: carts with products that became on sale
 								// Join the collection with the required tables
@@ -682,10 +682,13 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 										null)
 									->order('quote_table.updated_at DESC');
 							}
-							
+
 							//$collection->printlogquery(true,true);
 							$collection->load();
-							
+
+							// Skip the rest of the code if the collection is empty
+							if ($collection->getSize() == 0)    continue;
+
 							// Call iterator walk method with collection query string and callback method as parameters
 							// Has to be used to handle massive collection instead of foreach
 							Mage::getSingleton('core/resource_iterator')->walk($collection->getSelect(), array(array($this, 'generateRecipients')));
