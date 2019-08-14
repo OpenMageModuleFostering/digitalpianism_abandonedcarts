@@ -10,6 +10,8 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 	protected $_saleRecipients = array();
 	protected $_today = "";
 	protected $_customerGroups = "";
+	protected $_currentStoreId;
+	protected $_originalStoreId;
 
 	protected function _setToday()
 	{
@@ -94,7 +96,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			$_productCollection->setPageSize(1);
 
 			// Add product image
-			$emailTemplateVariables['productimage'] = (string)Mage::helper('catalog/image')->init($_productCollection->getFirstItem(), 'image');
+			//$emailTemplateVariables['productimage'] = (string)Mage::helper('catalog/image')->init($_productCollection->getFirstItem(), 'image');
 
 			$emailTemplateVariables['extraproductcount'] = 0;
 		}
@@ -107,6 +109,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 		}
 		// Assign the array of template variables
 		$this->_recipients[$args['row']['customer_email']]['emailTemplateVariables'] = $emailTemplateVariables;
+		$this->_recipients[$args['row']['customer_email']]['store_id'] = $this->_currentStoreId;
 	}
 
     /**
@@ -203,6 +206,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 
 			// Assign the array of template variables
 			$this->_saleRecipients[$args['row']['customer_email']]['emailTemplateVariables'] = $emailTemplateVariables;
+			$this->_saleRecipients[$args['row']['customer_email']]['store_id'] = $this->_currentStoreId;
 		}
 	}
 
@@ -214,16 +218,18 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 	{
 		try
 		{
-			// Get the transactional email template
-			$templateId = Mage::getStoreConfig('abandonedcartsconfig/options/email_template_sale');
-			// Get the sender
-			$sender = array();
-			$sender['email'] = Mage::getStoreConfig('abandonedcartsconfig/options/email');
-			$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
-
 			// Send the emails via a loop
 			foreach ($this->_getSaleRecipients() as $email => $recipient)
 			{
+				// Store Id
+				Mage::app()->setCurrentStore($recipient['store_id']);
+				// Get the transactional email template
+				$templateId = Mage::getStoreConfig('abandonedcartsconfig/options/email_template_sale');
+				// Get the sender
+				$sender = array();
+				$sender['email'] = Mage::getStoreConfig('abandonedcartsconfig/options/email');
+				$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
+
 				// Don't send the email if dryrun is set
 				if ($dryrun)
 				{
@@ -287,16 +293,18 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 	{
 		try
 		{
-			// Get the transactional email template
-			$templateId = Mage::getStoreConfig('abandonedcartsconfig/options/email_template');
-			// Get the sender
-			$sender = array();
-			$sender['email'] = Mage::getStoreConfig('abandonedcartsconfig/options/email');
-			$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
-
 			// Send the emails via a loop
 			foreach ($this->_getRecipients() as $email => $recipient)
 			{
+				// Store Id
+				Mage::app()->setCurrentStore($recipient['store_id']);
+				// Get the transactional email template
+				$templateId = Mage::getStoreConfig('abandonedcartsconfig/options/email_template');
+				// Get the sender
+				$sender = array();
+				$sender['email'] = Mage::getStoreConfig('abandonedcartsconfig/options/email');
+				$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
+
 				// Don't send the email if dryrun is set
 				if ($dryrun)
 				{
@@ -365,6 +373,8 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			if (Mage::helper('abandonedcarts')->getTestEmail()) $testemail = Mage::helper('abandonedcarts')->getTestEmail();
 			// Set customer groups
 			$this->_customerGroups = $this->_customerGroups ? $this->_customerGroups : Mage::helper('abandonedcarts')->getCustomerGroupsLimitation();
+			// Original store id
+			$this->_originalStoreId = Mage::app()->getStore()->getId();
 
 			if (Mage::helper('abandonedcarts')->isSaleEnabled())
 			{
@@ -389,6 +399,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 
 							// Get the store id
 							$storeId = $store->getStoreId();
+							$this->_currentStoreId = $storeId;
 
 							// Init the store to be able to load the quote and the collections properly
 							Mage::app()->init($storeId,'store');
@@ -529,9 +540,12 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				// Send the emails
 				$this->_sendSaleEmails($dryrun,$testemail);
 			}
+
+			Mage::app()->setCurrentStore($this->_originalStoreId);
 		}
 		catch (Exception $e)
 		{
+			Mage::app()->setCurrentStore($this->_originalStoreId);
 			Mage::helper('abandonedcarts')->log(__METHOD__ . " " . $e->getMessage());
 		}
 	}
@@ -548,6 +562,8 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 		if (Mage::helper('abandonedcarts')->getTestEmail()) $testemail = Mage::helper('abandonedcarts')->getTestEmail();
 		// Set customer groups
 		$this->_customerGroups = $this->_customerGroups ? $this->_customerGroups : Mage::helper('abandonedcarts')->getCustomerGroupsLimitation();
+
+		$this->_originalStoreId = Mage::app()->getStore()->getId();
 
 		try
 		{
@@ -587,6 +603,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 
 							// Get the store id
 							$storeId = $store->getStoreId();
+							$this->_currentStoreId = $storeId;
 							// Init the store to be able to load the quote and the collections properly
 							Mage::app()->init($storeId,'store');
 
@@ -699,9 +716,12 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				// Send the emails
 				$this->_sendEmails($dryrun,$testemail);
 			}
+
+			Mage::app()->setCurrentStore($this->_originalStoreId);
 		}
 		catch (Exception $e)
 		{
+			Mage::app()->setCurrentStore($this->_originalStoreId);
 			Mage::helper('abandonedcarts')->log(__METHOD__ . " " . $e->getMessage());
 		}
 	}
