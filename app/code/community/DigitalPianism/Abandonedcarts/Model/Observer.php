@@ -198,23 +198,23 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 												)
 											)
 								->joinInner(
-									array('quote_items' => 'sales_flat_quote_item'),
+									array('quote_items' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote_item')),
 									'quote_items.product_id = e.entity_id AND quote_items.price > 0.00',
 									null)
 								->joinInner(
-									array('quote_table' => 'sales_flat_quote'),
+									array('quote_table' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote')),
 									'quote_items.quote_id = quote_table.entity_id AND quote_table.items_count > 0 AND quote_table.is_active = 1 AND quote_table.customer_email IS NOT NULL AND quote_table.abandoned_sale_notified = 0 AND quote_table.store_id = '.$storeId,
 									null)
 								->joinInner(
-									array('catalog_flat' => 'catalog_product_flat_'.$storeId),
+									array('catalog_flat' => Mage::getSingleton("core/resource")->getTableName('catalog_product_flat_'.$storeId)),
 									'catalog_flat.entity_id = e.entity_id',
 									null)
 								->joinInner(
-									array('catalog_enabled'	=>	'catalog_product_entity_int'),
+									array('catalog_enabled'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_int')),
 									'catalog_enabled.entity_id = e.entity_id AND catalog_enabled.attribute_id = '.$statusId.' AND catalog_enabled.value = 1',
 									null)
 								->joinInner(
-									array('inventory' => 'cataloginventory_stock_status'),
+									array('inventory' => Mage::getSingleton("core/resource")->getTableName('cataloginventory_stock_status')),
 									'inventory.product_id = e.entity_id AND inventory.stock_status = 1 AND inventory.website_id = '.$websiteId,
 									null)
 								->order('quote_table.updated_at DESC');
@@ -368,23 +368,23 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 												)
 											)
 								->joinInner(
-									array('quote_items' => 'sales_flat_quote_item'),
+									array('quote_items' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote_item')),
 									'quote_items.product_id = e.entity_id AND quote_items.price > 0.00',
 									null)
 								->joinInner(
-									array('quote_table' => 'sales_flat_quote'),
+									array('quote_table' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote')),
 									'quote_items.quote_id = quote_table.entity_id AND quote_table.items_count > 0 AND quote_table.is_active = 1 AND quote_table.customer_email IS NOT NULL AND quote_table.abandoned_notified = 0 AND quote_table.updated_at < "'.$delay.'" AND quote_table.store_id = '.$storeId,
 									null)
 								->joinInner(
-									array('catalog_flat' => 'catalog_product_flat_'.$storeId),
+									array('catalog_flat' => Mage::getSingleton("core/resource")->getTableName('catalog_product_flat_'.$storeId)),
 									'catalog_flat.entity_id = e.entity_id',
 									null)
 								->joinInner(
-									array('catalog_enabled'	=>	'catalog_product_entity_int'),
+									array('catalog_enabled'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_int')),
 									'catalog_enabled.entity_id = e.entity_id AND catalog_enabled.attribute_id = '.$statusId.' AND catalog_enabled.value = 1',
 									null)
 								->joinInner(
-									array('inventory' => 'cataloginventory_stock_status'),
+									array('inventory' => Mage::getSingleton("core/resource")->getTableName('cataloginventory_stock_status')),
 									'inventory.product_id = e.entity_id AND inventory.stock_status = 1 AND website_id = '.$websiteId,
 									null)
 								->order('quote_table.updated_at DESC');
