@@ -3,6 +3,144 @@
 class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstract 
 {
 
+	protected $recipients = array();
+	protected $saleRecipients = array();
+	protected $today = "";
+	
+	public function setToday()
+	{
+		// Date handling	
+		$store = Mage_Core_Model_App::ADMIN_STORE_ID;
+		$timezone = Mage::app()->getStore($store)->getConfig(Mage_Core_Model_Locale::XML_PATH_DEFAULT_TIMEZONE);
+		date_default_timezone_set($timezone);
+	
+		// Current date
+		$currentdate = date("Ymd");
+
+		$day = (int)substr($currentdate,-2);
+		$month = (int)substr($currentdate,4,2);
+		$year = (int)substr($currentdate,0,4);
+
+		$date = array('year' => $year,'month' => $month,'day' => $day,'hour' => 23,'minute' => 59,'second' => 59);
+		
+		$today = new Zend_Date($date);
+		$today->setTimeZone("UTC");
+
+		date_default_timezone_set($timezone);
+
+		$this->today = $today->toString("Y-MM-dd HH:mm:ss");
+	}
+	
+	public function getToday()
+	{
+		return $this->today;
+	}
+	
+	public function generateRecipients($args)
+	{
+		// Test if the customer is already in the array
+		if (!array_key_exists($args['row']['customer_email'], $this->recipients))
+		{
+			// Create an array of variables to assign to template 
+			$emailTemplateVariables = array(); 
+			
+			// Array that contains the data which will be used inside the template
+			$emailTemplateVariables['fullname'] = $args['row']['customer_firstname'].' '.$args['row']['customer_lastname']; 
+			$emailTemplateVariables['firstname'] = $args['row']['customer_firstname'];
+			$emailTemplateVariables['productname'] = $args['row']['product_name'];
+					
+			// Assign the values to the array of recipients
+			$this->recipients[$args['row']['customer_email']]['cartId'] = $args['row']['cart_id'];
+			
+			$emailTemplateVariables['extraproductcount'] = 0;
+		}
+		else
+		{
+			// We create some extra variables if there is several products in the cart
+			$emailTemplateVariables = $this->recipients[$args['row']['customer_email']]['emailTemplateVariables'];
+			// We increase the product count
+			$emailTemplateVariables['extraproductcount'] += 1;
+		}
+		// Assign the array of template variables
+		$this->recipients[$args['row']['customer_email']]['emailTemplateVariables'] = $emailTemplateVariables;
+	}
+
+	public function generateSaleRecipients($args)
+	{
+		// Double check if the special from date is set
+		if (!array_key_exists('product_special_from_date',$args['row']) || !$args['row']['product_special_from_date'])
+		{
+			// If not we use today for the comparison
+			$fromDate = $this->getToday();
+		}
+		else $fromDate = $args['row']['product_special_from_date'];
+		
+		// Do the same for the special to date
+		if (!array_key_exists('product_special_to_date',$args['row']) || !$args['row']['product_special_to_date'])
+		{
+			$toDate = $this->getToday();
+		}
+		else $toDate = $args['row']['product_special_to_date'];
+		
+		// We need to ensure that the price in cart is higher than the new special price
+		// As well as the date comparison in case the sale is over or hasn't started
+		if ($args['row']['product_price_in_cart'] > 0.00 
+			&& $args['row']['product_special_price'] > 0.00 
+			&& ($args['row']['product_price_in_cart'] > $args['row']['product_special_price'])
+			&& ($fromDate <= $this->getToday())
+			&& ($toDate >= $this->getToday()))
+		{
+			
+			// Test if the customer is already in the array
+			if (!array_key_exists($args['row']['customer_email'], $this->saleRecipients))
+			{
+				// Create an array of variables to assign to template 
+				$emailTemplateVariables = array(); 
+				
+				// Array that contains the data which will be used inside the template
+				$emailTemplateVariables['fullname'] = $args['row']['customer_firstname'].' '.$args['row']['customer_lastname']; 
+				$emailTemplateVariables['firstname'] = $args['row']['customer_firstname'];
+				$emailTemplateVariables['productname'] = $args['row']['product_name']; 
+				$emailTemplateVariables['cartprice'] = number_format($args['row']['product_price_in_cart'],2); 
+				$emailTemplateVariables['specialprice'] = number_format($args['row']['product_special_price'],2);
+				
+				// Assign the values to the array of recipients
+				$this->saleRecipients[$args['row']['customer_email']]['cartId'] = $args['row']['cart_id'];
+			}
+			else
+			{
+				// We create some extra variables if there is several products in the cart
+				$emailTemplateVariables = $this->saleRecipients[$args['row']['customer_email']]['emailTemplateVariables'];
+				// Discount amount
+				// If one product before
+				if (!array_key_exists('discount',$emailTemplateVariables))
+				{
+					$emailTemplateVariables['discount'] = $emailTemplateVariables['cartprice'] - $emailTemplateVariables['specialprice'];
+				}
+				// We add the discount on the second product
+				$moreDiscount = number_format($args['row']['product_price_in_cart'],2) - number_format($args['row']['product_special_price'],2);
+				$emailTemplateVariables['discount'] += $moreDiscount;
+				// We increase the product count
+				if (!array_key_exists('extraproductcount',$emailTemplateVariables))
+				{
+					$emailTemplateVariables['extraproductcount'] = 0;
+				}
+				$emailTemplateVariables['extraproductcount'] += 1;
+			}
+			
+			// Add currency codes to prices
+			$emailTemplateVariables['cartprice'] = Mage::helper('core')->currency($emailTemplateVariables['cartprice'], true, false);
+			$emailTemplateVariables['specialprice'] = Mage::helper('core')->currency($emailTemplateVariables['specialprice'], true, false);
+			if (array_key_exists('discount',$emailTemplateVariables))
+			{
+				$emailTemplateVariables['discount'] = Mage::helper('core')->currency($emailTemplateVariables['discount'], true, false);
+			}
+	
+			// Assign the array of template variables
+			$this->saleRecipients[$args['row']['customer_email']]['emailTemplateVariables'] = $emailTemplateVariables;
+		}
+	}
+
 	/**
 	 * Send notification email to customer with abandoned cart containing sale products
 	 * @param boolean if dryrun is set to true, it won't send emails and won't alter quotes
@@ -12,31 +150,11 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 	{
 		if (Mage::helper('abandonedcarts')->getDryRun()) $dryrun = true;
 		if (Mage::helper('abandonedcarts')->getTestEmail()) $testemail = Mage::helper('abandonedcarts')->getTestEmail();
-		
 		try
 		{
 			if (Mage::helper('abandonedcarts')->isSaleEnabled())
 			{
-				// Date handling	
-				$store = Mage_Core_Model_App::ADMIN_STORE_ID;
-				$timezone = Mage::app()->getStore($store)->getConfig(Mage_Core_Model_Locale::XML_PATH_DEFAULT_TIMEZONE);
-				date_default_timezone_set($timezone);
-			
-				// Current date
-				$currentdate = date("Ymd");
-
-				$day = (int)substr($currentdate,-2);
-				$month = (int)substr($currentdate,4,2);
-				$year = (int)substr($currentdate,0,4);
-
-				$date = array('year' => $year,'month' => $month,'day' => $day,'hour' => 23,'minute' => 59,'second' => 59);
-				
-				$today = new Zend_Date($date);
-				$today->setTimeZone("UTC");
-
-				date_default_timezone_set($timezone);
-
-				$todayString = $today->toString("Y-MM-dd HH:mm:ss");
+				$this->setToday();
 				
 				// Get the attribute id for the status attribute
 				$eavAttribute = new Mage_Eav_Model_Mysql4_Entity_Attribute();
@@ -110,84 +228,9 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 								continue;
 							}
 							
-							// Recipients array
-							$recipients = array();
-							
-							foreach($collection as $entry)
-							{
-								// Double check if the special from date is set
-								if (!$entry->getProductSpecialFromDate())
-								{
-									// If not we use today for the comparison
-									$fromDate = $todayString;
-								}
-								else $fromDate = $entry->getProductSpecialFromDate();
-								
-								// Do the same for the special to date
-								if (!$entry->getProductSpecialToDate())
-								{
-									$toDate = $todayString;
-								}
-								else $toDate = $entry->getProductSpecialToDate();
-								
-								// We need to ensure that the price in cart is higher than the new special price
-								// As well as the date comparison in case the sale is over or hasn't started
-								if ($entry->getProductPriceInCart() > 0.00 
-									&& $entry->getProductSpecialPrice() > 0.00 
-									&& ($entry->getProductPriceInCart() > $entry->getProductSpecialPrice())
-									&& ($fromDate <= $todayString)
-									&& ($toDate >= $todayString))
-								{
-									
-									// Test if the customer is already in the array
-									if (!array_key_exists($entry->getCustomerEmail(), $recipients))
-									{
-										// Create an array of variables to assign to template 
-										$emailTemplateVariables = array(); 
-										
-										// Array that contains the data which will be used inside the template
-										$emailTemplateVariables['fullname'] = $entry->getCustomerFirstname().' '.$entry->getCustomerLastname(); 
-										$emailTemplateVariables['firstname'] = $entry->getCustomerFirstname();
-										$emailTemplateVariables['productname'] = $entry->getProductName(); 
-										$emailTemplateVariables['cartprice'] = number_format($entry->getProductPriceInCart(),2); 
-										$emailTemplateVariables['specialprice'] = number_format($entry->getProductSpecialPrice(),2);
-										
-										// Assign the values to the array of recipients
-										$recipients[$entry->getCustomerEmail()]['cartId'] = $entry->getCartId();
-									}
-									else
-									{
-										// We create some extra variables if there is several products in the cart
-										$emailTemplateVariables = $recipients[$entry->getCustomerEmail()]['emailTemplateVariables'];
-										// Discount amount
-										// If one product before
-										if (!array_key_exists('discount',$emailTemplateVariables))
-										{
-											$emailTemplateVariables['discount'] = $emailTemplateVariables['cartprice'] - $emailTemplateVariables['specialprice'];
-										}
-										// We add the discount on the second product
-										$moreDiscount = number_format($entry->getProductPriceInCart(),2) - number_format($entry->getProductSpecialPrice(),2);
-										$emailTemplateVariables['discount'] += $moreDiscount;
-										// We increase the product count
-										if (!array_key_exists('extraproductcount',$emailTemplateVariables))
-										{
-											$emailTemplateVariables['extraproductcount'] = 0;
-										}
-										$emailTemplateVariables['extraproductcount'] += 1;
-									}
-									
-									// Add currency codes to prices
-									$emailTemplateVariables['cartprice'] = Mage::helper('core')->currency($emailTemplateVariables['cartprice'], true, false);
-									$emailTemplateVariables['specialprice'] = Mage::helper('core')->currency($emailTemplateVariables['specialprice'], true, false);
-									if (array_key_exists('discount',$emailTemplateVariables))
-									{
-										$emailTemplateVariables['discount'] = Mage::helper('core')->currency($emailTemplateVariables['discount'], true, false);
-									}
-							
-									// Assign the array of template variables
-									$recipients[$entry->getCustomerEmail()]['emailTemplateVariables'] = $emailTemplateVariables;
-								}
-							}
+							// Call iterator walk method with collection query string and callback method as parameters
+							// Has to be used to handle massive collection instead of foreach
+							Mage::getSingleton('core/resource_iterator')->walk($collection->getSelect(), array(array($this, 'generateSaleRecipients')));
 							
 							// Get the transactional email template
 							$templateId = Mage::getStoreConfig('abandonedcartsconfig/options/email_template_sale');
@@ -197,7 +240,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 							$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
 							
 							// Send the emails via a loop
-							foreach ($recipients as $email => $recipient)
+							foreach ($this->saleRecipients as $email => $recipient)
 							{
 								// Don't send the email if dryrun is set
 								if ($dryrun)
@@ -266,7 +309,6 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 	{
 		if (Mage::helper('abandonedcarts')->getDryRun()) $dryrun = true;
 		if (Mage::helper('abandonedcarts')->getTestEmail()) $testemail = Mage::helper('abandonedcarts')->getTestEmail();
-		
 		try
 		{
 			if (Mage::helper('abandonedcarts')->isEnabled())
@@ -350,37 +392,9 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 							// echo $collection->printlogquery(true);
 							$collection->load();
 							
-							// Recipients array
-							$recipients = array();
-							
-							foreach($collection as $entry)
-							{
-								// Test if the customer is already in the array
-								if (!array_key_exists($entry->getCustomerEmail(), $recipients))
-								{
-									// Create an array of variables to assign to template 
-									$emailTemplateVariables = array(); 
-									
-									// Array that contains the data which will be used inside the template
-									$emailTemplateVariables['fullname'] = $entry->getCustomerFirstname().' '.$entry->getCustomerLastname(); 
-									$emailTemplateVariables['firstname'] = $entry->getCustomerFirstname();
-									$emailTemplateVariables['productname'] = $entry->getProductName();
-											
-									// Assign the values to the array of recipients
-									$recipients[$entry->getCustomerEmail()]['cartId'] = $entry->getCartId();
-									
-									$emailTemplateVariables['extraproductcount'] = 0;
-								}
-								else
-								{
-									// We create some extra variables if there is several products in the cart
-									$emailTemplateVariables = $recipients[$entry->getCustomerEmail()]['emailTemplateVariables'];
-									// We increase the product count
-									$emailTemplateVariables['extraproductcount'] += 1;
-								}
-								// Assign the array of template variables
-								$recipients[$entry->getCustomerEmail()]['emailTemplateVariables'] = $emailTemplateVariables;
-							}
+							// Call iterator walk method with collection query string and callback method as parameters
+							// Has to be used to handle massive collection instead of foreach
+							Mage::getSingleton('core/resource_iterator')->walk($collection->getSelect(), array(array($this, 'generateRecipients')));
 							
 							// Get the transactional email template
 							$templateId = Mage::getStoreConfig('abandonedcartsconfig/options/email_template');
@@ -390,7 +404,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 							$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
 							
 							// Send the emails via a loop
-							foreach ($recipients as $email => $recipient)
+							foreach ($this->recipients as $email => $recipient)
 							{
 								// Don't send the email if dryrun is set
 								if ($dryrun)
