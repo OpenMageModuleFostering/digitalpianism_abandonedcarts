@@ -140,6 +140,150 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			$this->saleRecipients[$args['row']['customer_email']]['emailTemplateVariables'] = $emailTemplateVariables;
 		}
 	}
+	
+	public function sendSaleEmails()
+	{
+		try
+		{
+			if (Mage::helper('abandonedcarts')->getDryRun()) $dryrun = true;
+			if (Mage::helper('abandonedcarts')->getTestEmail()) $testemail = Mage::helper('abandonedcarts')->getTestEmail();
+			
+			// Get the transactional email template
+			$templateId = Mage::getStoreConfig('abandonedcartsconfig/options/email_template_sale');
+			// Get the sender
+			$sender = array();
+			$sender['email'] = Mage::getStoreConfig('abandonedcartsconfig/options/email');
+			$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
+			
+			// Send the emails via a loop
+			foreach ($this->saleRecipients as $email => $recipient)
+			{
+				// Don't send the email if dryrun is set
+				if ($dryrun)
+				{
+					// Log data when dried run
+					Mage::helper('abandonedcarts')->log(__METHOD__);
+					Mage::helper('abandonedcarts')->log($recipient['emailTemplateVariables']);
+					// If the test email is set and found
+					if (isset($testemail) && $email == $testemail)
+					{
+						Mage::helper('abandonedcarts')->log(__METHOD__ . "sendAbandonedCartsSaleEmail test: " . $email);
+						// Send the test email
+						Mage::getModel('core/email_template')
+								->sendTransactional(
+										$templateId,
+										$sender,
+										$email,
+										$recipient['emailTemplateVariables']['fullname'] ,
+										$recipient['emailTemplateVariables'],
+										null);
+					}
+				}
+				else
+				{
+					Mage::helper('abandonedcarts')->log(__METHOD__ . "sendAbandonedCartsSaleEmail: " . $email);
+					
+					// Send the email
+					Mage::getModel('core/email_template')
+							->sendTransactional(
+									$templateId,
+									$sender,
+									$email,
+									$recipient['emailTemplateVariables']['fullname'] ,
+									$recipient['emailTemplateVariables'],
+									null);
+				}
+				
+				// Load the quote
+				$quote = Mage::getModel('sales/quote')->load($recipient['cartId']);
+
+				// We change the notification attribute
+				$quote->setAbandonedSaleNotified(1);
+				
+				// Save only if dryrun is false or if the test email is set and found
+				if (!$dryrun || (isset($testemail) && $email == $testemail))
+				{
+					$quote->save();
+				}
+			}
+		}
+		catch (Exception $e)
+		{
+			Mage::helper('abandonedcarts')->log(__METHOD__ . " " . $e->getMessage());
+		}
+	}
+	
+	public function sendEmails()
+	{
+		try
+		{
+			if (Mage::helper('abandonedcarts')->getDryRun()) $dryrun = true;
+			if (Mage::helper('abandonedcarts')->getTestEmail()) $testemail = Mage::helper('abandonedcarts')->getTestEmail();
+			
+			// Get the transactional email template
+			$templateId = Mage::getStoreConfig('abandonedcartsconfig/options/email_template');
+			// Get the sender
+			$sender = array();
+			$sender['email'] = Mage::getStoreConfig('abandonedcartsconfig/options/email');
+			$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
+			
+			// Send the emails via a loop
+			foreach ($this->recipients as $email => $recipient)
+			{
+				// Don't send the email if dryrun is set
+				if ($dryrun)
+				{
+					// Log data when dried run
+					Mage::helper('abandonedcarts')->log(__METHOD__);
+					Mage::helper('abandonedcarts')->log($recipient['emailTemplateVariables']);
+					// If the test email is set and found
+					if (isset($testemail) && $email == $testemail)
+					{
+						Mage::helper('abandonedcarts')->log(__METHOD__ . "sendAbandonedCartsEmail test: " . $email);
+						// Send the test email
+						Mage::getModel('core/email_template')
+								->sendTransactional(
+										$templateId,
+										$sender,
+										$email,
+										$recipient['emailTemplateVariables']['fullname'] ,
+										$recipient['emailTemplateVariables'],
+										null);
+					}
+				}
+				else
+				{
+					Mage::helper('abandonedcarts')->log(__METHOD__ . "sendAbandonedCartsEmail: " . $email);
+					
+					// Send the email
+					Mage::getModel('core/email_template')
+							->sendTransactional(
+									$templateId,
+									$sender,
+									$email,
+									$recipient['emailTemplateVariables']['fullname'] ,
+									$recipient['emailTemplateVariables'],
+									null);
+				}
+				
+				// Load the quote
+				$quote = Mage::getModel('sales/quote')->load($recipient['cartId']);
+
+				// We change the notification attribute
+				$quote->setAbandonedNotified(1);
+				
+				// Save only if dryrun is false or if the test email is set and found
+				if (!$dryrun || (isset($testemail) && $email == $testemail))
+				{
+					$quote->save();
+				}
+			}
+		}
+		catch (Exception $e)
+		{
+			Mage::helper('abandonedcarts')->log(__METHOD__ . " " . $e->getMessage());
+		}
+	}
 
 	/**
 	 * Send notification email to customer with abandoned cart containing sale products
@@ -148,8 +292,6 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 	 */
 	public function sendAbandonedCartsSaleEmail($dryrun = false, $testemail = null) 
 	{
-		if (Mage::helper('abandonedcarts')->getDryRun()) $dryrun = true;
-		if (Mage::helper('abandonedcarts')->getTestEmail()) $testemail = Mage::helper('abandonedcarts')->getTestEmail();
 		try
 		{
 			if (Mage::helper('abandonedcarts')->isSaleEnabled())
@@ -157,7 +299,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				$this->setToday();
 				
 				// Get the attribute id for the status attribute
-				$eavAttribute = new Mage_Eav_Model_Mysql4_Entity_Attribute();
+				$eavAttribute = Mage::getModel('eav/entity_attribute');
 				$statusId = $eavAttribute->getIdByCode('catalog_product', 'status');
 				
 				// Loop through the stores
@@ -223,7 +365,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 							$collection->load();
 							
 							// Skip the rest of the code if the collection is empty
-							if (count($collection) == 0)
+							if ($collection->getSize() == 0)
 							{
 								continue;
 							}
@@ -232,63 +374,8 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 							// Has to be used to handle massive collection instead of foreach
 							Mage::getSingleton('core/resource_iterator')->walk($collection->getSelect(), array(array($this, 'generateSaleRecipients')));
 							
-							// Get the transactional email template
-							$templateId = Mage::getStoreConfig('abandonedcartsconfig/options/email_template_sale');
-							// Get the sender
-							$sender = array();
-							$sender['email'] = Mage::getStoreConfig('abandonedcartsconfig/options/email');
-							$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
-							
-							// Send the emails via a loop
-							foreach ($this->saleRecipients as $email => $recipient)
-							{
-								// Don't send the email if dryrun is set
-								if ($dryrun)
-								{
-									// Log data when dried run
-									Mage::helper('abandonedcarts')->log(sprintf("%s->%s", __METHOD__, print_r($recipient['emailTemplateVariables'],true)));
-									// If the test email is set and found
-									if (isset($testemail) && $email == $testemail)
-									{
-										Mage::helper('abandonedcarts')->log(__METHOD__ . "sendAbandonedCartsSaleEmail test: " . $email);
-										// Send the test email
-										Mage::getModel('core/email_template')
-												->sendTransactional(
-														$templateId,
-														$sender,
-														$email,
-														$recipient['emailTemplateVariables']['fullname'] ,
-														$recipient['emailTemplateVariables'],
-														null);
-									}
-								}
-								else
-								{
-									Mage::helper('abandonedcarts')->log(__METHOD__ . "sendAbandonedCartsSaleEmail: " . $email);
-									
-									// Send the email
-									Mage::getModel('core/email_template')
-											->sendTransactional(
-													$templateId,
-													$sender,
-													$email,
-													$recipient['emailTemplateVariables']['fullname'] ,
-													$recipient['emailTemplateVariables'],
-													null);
-								}
-								
-								// Load the quote
-								$quote = Mage::getModel('sales/quote')->load($recipient['cartId']);
-
-								// We change the notification attribute
-								$quote->setAbandonedSaleNotified(1);
-								
-								// Save only if dryrun is false or if the test email is set and found
-								if (!$dryrun || (isset($testemail) && $email == $testemail))
-								{
-									$quote->save();
-								}
-							}
+							// Send the emails
+							$this->sendSaleEmails();
 						}
 					}
 				}
@@ -332,7 +419,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				}
 				
 				// Get the attribute id for the status attribute
-				$eavAttribute = new Mage_Eav_Model_Mysql4_Entity_Attribute();
+				$eavAttribute = Mage::getModel('eav/entity_attribute');
 				$statusId = $eavAttribute->getIdByCode('catalog_product', 'status');
 				
 				// Loop through the stores
@@ -395,64 +482,6 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 							// Call iterator walk method with collection query string and callback method as parameters
 							// Has to be used to handle massive collection instead of foreach
 							Mage::getSingleton('core/resource_iterator')->walk($collection->getSelect(), array(array($this, 'generateRecipients')));
-							
-							// Get the transactional email template
-							$templateId = Mage::getStoreConfig('abandonedcartsconfig/options/email_template');
-							// Get the sender
-							$sender = array();
-							$sender['email'] = Mage::getStoreConfig('abandonedcartsconfig/options/email');
-							$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
-							
-							// Send the emails via a loop
-							foreach ($this->recipients as $email => $recipient)
-							{
-								// Don't send the email if dryrun is set
-								if ($dryrun)
-								{
-									// Log data when dried run
-									Mage::helper('abandonedcarts')->log(sprintf("%s->%s", __METHOD__, print_r($recipient['emailTemplateVariables'],true)));
-									// If the test email is set and found
-									if (isset($testemail) && $email == $testemail)
-									{
-										Mage::helper('abandonedcarts')->log(__METHOD__ . "sendAbandonedCartsEmail test: " . $email);
-										// Send the test email
-										Mage::getModel('core/email_template')
-												->sendTransactional(
-														$templateId,
-														$sender,
-														$email,
-														$recipient['emailTemplateVariables']['fullname'] ,
-														$recipient['emailTemplateVariables'],
-														null);
-									}
-								}
-								else
-								{
-									Mage::helper('abandonedcarts')->log(__METHOD__ . "sendAbandonedCartsEmail: " . $email);
-									
-									// Send the email
-									Mage::getModel('core/email_template')
-											->sendTransactional(
-													$templateId,
-													$sender,
-													$email,
-													$recipient['emailTemplateVariables']['fullname'] ,
-													$recipient['emailTemplateVariables'],
-													null);
-								}
-								
-								// Load the quote
-								$quote = Mage::getModel('sales/quote')->load($recipient['cartId']);
-
-								// We change the notification attribute
-								$quote->setAbandonedNotified(1);
-								
-								// Save only if dryrun is false or if the test email is set and found
-								if (!$dryrun || (isset($testemail) && $email == $testemail))
-								{
-									$quote->save();
-								}
-							}
 						}
 					}
 				}
