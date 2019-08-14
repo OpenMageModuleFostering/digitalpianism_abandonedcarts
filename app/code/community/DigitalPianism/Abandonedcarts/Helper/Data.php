@@ -1,9 +1,6 @@
 <?php
 
-/**
- * Class DigitalPianism_Abandonedcarts_Helper_Data
- */
-class DigitalPianism_Abandonedcarts_Helper_Data extends Mage_Core_Helper_Abstract
+class DigitalPianism_Abandonedcarts_Helper_Data extends Mage_Core_Helper_Abstract 
 {
 	protected $logFileName = 'digitalpianism_abandonedcarts.log';
 	
@@ -15,35 +12,23 @@ class DigitalPianism_Abandonedcarts_Helper_Data extends Mage_Core_Helper_Abstrac
 	{
 		Mage::log($data, null, $this->logFileName);
 	}
-
-    /**
-     * @return mixed
-     */
-    public function isEnabled()
+	
+	public function isEnabled()
 	{
 		return Mage::getStoreConfig('abandonedcartsconfig/options/enable');
 	}
-
-    /**
-     * @return mixed
-     */
-    public function isSaleEnabled()
+	
+	public function isSaleEnabled()
 	{
 		return Mage::getStoreConfig('abandonedcartsconfig/options/enable_sale');
 	}
-
-    /**
-     * @return mixed
-     */
-    public function getDryRun()
+	
+	public function getDryRun()
 	{
 		return Mage::getStoreConfig('abandonedcartsconfig/options/dryrun');
 	}
-
-    /**
-     * @return mixed
-     */
-    public function getTestEmail()
+	
+	public function getTestEmail()
 	{
 		return Mage::getStoreConfig('abandonedcartsconfig/options/testemail');
 	}

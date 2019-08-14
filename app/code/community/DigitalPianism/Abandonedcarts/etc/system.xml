@@ -32,14 +32,6 @@
 							<show_in_website>1</show_in_website>
 							<show_in_store>1</show_in_store>
 						</enable>
-						<cron_expr translate="label">
-							<label>Cron Schedule</label>
-							<frontend_type>text</frontend_type>
-							<sort_order>15</sort_order>
-							<show_in_default>1</show_in_default>
-							<show_in_website>1</show_in_website>
-							<show_in_store>1</show_in_store>
-						</cron_expr>
 						<name translate="label">
 							<label>Sender Name</label>
 							<frontend_type>text</frontend_type>
@@ -110,6 +102,8 @@
 						<testemail translate="label">
 							<label>Test Email</label>
 							<frontend_type>text</frontend_type>
+							<validate>validate-email</validate>
+							<backend_model>adminhtml/system_config_backend_email_address</backend_model>
 							<sort_order>90</sort_order>
 							<show_in_default>1</show_in_default>
 							<show_in_website>1</show_in_website>

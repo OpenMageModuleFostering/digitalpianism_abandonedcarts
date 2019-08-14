@@ -4,7 +4,7 @@
 
     <modules>
         <DigitalPianism_Abandonedcarts>
-            <version>0.1.14</version>
+            <version>0.1.3</version>
         </DigitalPianism_Abandonedcarts>
     </modules>
 	
@@ -65,25 +65,20 @@
         	<abandonedcarts>
         		<class>DigitalPianism_Abandonedcarts_Model</class>
         	</abandonedcarts>
-            <sales_resource>
-                <rewrite>
-                    <quote>DigitalPianism_Abandonedcarts_Model_Sales_Resource_Quote</quote>
-                </rewrite>
-            </sales_resource>
         </models>
 
 		<template>
 			<email>
-				<abandonedcartsconfig_options_email_template translate="label" module="abandonedcarts">
+				<sales_abandonedcarts_email_template translate="label" module="abandonedcarts">
 					<label>Abandoned Cart Template</label> 
 					<file>digitalpianism/sales_abandonedcarts.html</file> 
 					<type>html</type>
-				</abandonedcartsconfig_options_email_template>
-				<abandonedcartsconfig_options_email_template_sale translate="label" module="abandonedcarts">
+				</sales_abandonedcarts_email_template>
+				<sales_abandonedcarts_email_template_sale translate="label" module="abandonedcarts">
 					<label>Abandoned Cart Sale Template</label> 
 					<file>digitalpianism/sales_abandonedcarts_sale.html</file> 
 					<type>html</type>
-				</abandonedcartsconfig_options_email_template_sale>
+				</sales_abandonedcarts_email_template_sale>
 			</email>
 		</template>
 		
@@ -114,7 +109,7 @@
 		<jobs> 
 			<digitalpianism_abandonedcarts_send>
 				<schedule>
-					<config_path>abandonedcartsconfig/options/cron_expr</config_path>
+					<cron_expr>0 0 * * *</cron_expr>
 				</schedule>
 				<run>
 					<model>abandonedcarts/observer::sendAbandonedCartsEmail</model>
@@ -125,14 +120,11 @@
 	</crontab>
 	
 	<default>
-		<abandonedcartsconfig>
-			<options>
-				<cron_expr>0 1 * * *</cron_expr>
-				<notify_delay>20</notify_delay>
-				<email_template>abandonedcartsconfig_options_email_template</email_template>
-				<email_template_sale>abandonedcartsconfig_options_email_template_sale</email_template_sale>
-			</options>
-		</abandonedcartsconfig>
+		<sales>
+			<abandonedcarts>               
+				<notify_delay>20</notify_delay>        
+			</abandonedcarts>       
+		</sales>
 	</default>
 
 </config>

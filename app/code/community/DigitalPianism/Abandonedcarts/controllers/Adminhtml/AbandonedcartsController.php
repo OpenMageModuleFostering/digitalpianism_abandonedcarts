@@ -1,8 +1,5 @@
 <?php
 
-/**
- * Class DigitalPianism_Abandonedcarts_Adminhtml_AbandonedcartsController
- */
 class DigitalPianism_Abandonedcarts_Adminhtml_AbandonedcartsController extends Mage_Adminhtml_Controller_Action
 {
     /**
