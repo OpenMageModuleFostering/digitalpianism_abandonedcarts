@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * Class DigitalPianism_Abandonedcarts_Block_Adminhtml_System_Config_Form_Button
+ */
 class DigitalPianism_Abandonedcarts_Block_Adminhtml_System_Config_Form_Button extends Mage_Adminhtml_Block_System_Config_Form_Field
 {
     /*

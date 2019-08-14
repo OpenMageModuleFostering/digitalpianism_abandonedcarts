@@ -1,6 +1,9 @@
 <?php
 
-class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstract 
+/**
+ * Class DigitalPianism_Abandonedcarts_Model_Observer
+ */
+class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstract
 {
 
 	protected $recipients = array();
@@ -30,13 +33,35 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 
 		$this->today = $today->toString("Y-MM-dd HH:mm:ss");
 	}
-	
-	public function getToday()
+
+    /**
+     * @return string
+     */
+    public function getToday()
 	{
 		return $this->today;
 	}
-	
-	public function generateRecipients($args)
+
+    /**
+     * @return array
+     */
+    public function getRecipients()
+	{
+		return $this->recipients;
+	}
+
+    /**
+     * @return array
+     */
+    public function getSaleRecipients()
+	{
+		return $this->saleRecipients;
+	}
+
+    /**
+     * @param $args
+     */
+    public function generateRecipients($args)
 	{
 		// Test if the customer is already in the array
 		if (!array_key_exists($args['row']['customer_email'], $this->recipients))
@@ -51,6 +76,18 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 					
 			// Assign the values to the array of recipients
 			$this->recipients[$args['row']['customer_email']]['cartId'] = $args['row']['cart_id'];
+
+			// Get product image via collection
+			$_productCollection = Mage::getResourceModel('catalog/product_collection');
+			// Add attributes to the collection
+			$_productCollection->addAttributeToFilter('entity_id',array('eq' => $args['row']['product_id']));
+			// Add image to the collection
+			$_productCollection->joinAttribute('image', 'catalog_product/image', 'entity_id', null, 'left');
+			// Limit the collection to get the specific product
+			$_productCollection->setPageSize(1);
+
+			// Add product image
+			$emailTemplateVariables['productimage'] = (string)Mage::helper('catalog/image')->init($_productCollection->getFirstItem(), 'image');
 			
 			$emailTemplateVariables['extraproductcount'] = 0;
 		}
@@ -65,7 +102,10 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 		$this->recipients[$args['row']['customer_email']]['emailTemplateVariables'] = $emailTemplateVariables;
 	}
 
-	public function generateSaleRecipients($args)
+    /**
+     * @param $args
+     */
+    public function generateSaleRecipients($args)
 	{
 		// Double check if the special from date is set
 		if (!array_key_exists('product_special_from_date',$args['row']) || !$args['row']['product_special_from_date'])
@@ -106,6 +146,18 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				
 				// Assign the values to the array of recipients
 				$this->saleRecipients[$args['row']['customer_email']]['cartId'] = $args['row']['cart_id'];
+
+				// Get product image via collection
+				$_productCollection = Mage::getResourceModel('catalog/product_collection');
+				// Add attributes to the collection
+				$_productCollection->addAttributeToFilter('entity_id',array('eq' => $args['row']['product_id']));
+				// Add image to the collection
+				$_productCollection->joinAttribute('image', 'catalog_product/image', 'entity_id', null, 'left');
+				// Limit the collection to get the specific product
+				$_productCollection->setPageSize(1);
+
+				// Add product image
+				$emailTemplateVariables['productimage'] = (string)Mage::helper('catalog/image')->init($_productCollection->getFirstItem(), 'image');
 			}
 			else
 			{
@@ -140,8 +192,12 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			$this->saleRecipients[$args['row']['customer_email']]['emailTemplateVariables'] = $emailTemplateVariables;
 		}
 	}
-	
-	public function sendSaleEmails($dryrun,$testemail)
+
+    /**
+     * @param $dryrun
+     * @param $testemail
+     */
+    public function sendSaleEmails($dryrun,$testemail)
 	{
 		try
 		{			
@@ -153,7 +209,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
 			
 			// Send the emails via a loop
-			foreach ($this->saleRecipients as $email => $recipient)
+			foreach ($this->getSaleRecipients() as $email => $recipient)
 			{
 				// Don't send the email if dryrun is set
 				if ($dryrun)
@@ -200,7 +256,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				// Save only if dryrun is false or if the test email is set and found
 				if (!$dryrun || (isset($testemail) && $email == $testemail))
 				{
-					$quote->save();
+                    $quote->getResource()->saveAttribute($quote,array('abandoned_sale_notified'));
 				}
 			}
 		}
@@ -209,8 +265,12 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			Mage::helper('abandonedcarts')->log(__METHOD__ . " " . $e->getMessage());
 		}
 	}
-	
-	public function sendEmails($dryrun,$testemail)
+
+    /**
+     * @param $dryrun
+     * @param $testemail
+     */
+    public function sendEmails($dryrun,$testemail)
 	{
 		try
 		{		
@@ -222,7 +282,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
 			
 			// Send the emails via a loop
-			foreach ($this->recipients as $email => $recipient)
+			foreach ($this->getRecipients() as $email => $recipient)
 			{
 				// Don't send the email if dryrun is set
 				if ($dryrun)
@@ -269,7 +329,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				// Save only if dryrun is false or if the test email is set and found
 				if (!$dryrun || (isset($testemail) && $email == $testemail))
 				{
-					$quote->save();
+                    $quote->getResource()->saveAttribute($quote,array('abandoned_notified'));
 				}
 			}
 		}
@@ -281,8 +341,8 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 
 	/**
 	 * Send notification email to customer with abandoned cart containing sale products
-	 * @param boolean if dryrun is set to true, it won't send emails and won't alter quotes
-	 * @param string email to test
+	 * @param boolean $dryrun if dryrun is set to true, it won't send emails and won't alter quotes
+	 * @param string $testemail email to test
 	 */
 	public function sendAbandonedCartsSaleEmail($dryrun = false, $testemail = null) 
 	{
@@ -297,6 +357,11 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				// Get the attribute id for the status attribute
 				$eavAttribute = Mage::getModel('eav/entity_attribute');
 				$statusId = $eavAttribute->getIdByCode('catalog_product', 'status');
+				$nameId = $eavAttribute->getIdByCode('catalog_product', 'name');
+				$priceId = $eavAttribute->getIdByCode('catalog_product', 'price');
+				$spriceId = $eavAttribute->getIdByCode('catalog_product', 'special_price');
+				$spfromId = $eavAttribute->getIdByCode('catalog_product', 'special_from_date');
+				$sptoId = $eavAttribute->getIdByCode('catalog_product', 'special_to_date');
 				
 				// Loop through the stores
 				foreach (Mage::app()->getWebsites() as $website) {
@@ -315,56 +380,126 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 							// Get the product collection
 							$collection = Mage::getResourceModel('catalog/product_collection')->setStore($storeId);
 							
-							// First collection: carts with products that became on sale
-							// Join the collection with the required tables
-							$collection->getSelect()
-								->reset(Zend_Db_Select::COLUMNS)
-								->columns(array('e.entity_id AS product_id',
-												'e.sku',
-												'catalog_flat.name as product_name',
-												'catalog_flat.price as product_price',
-												'catalog_flat.special_price as product_special_price',
-												'catalog_flat.special_from_date as product_special_from_date',
-												'catalog_flat.special_to_date as product_special_to_date',
-												'quote_table.entity_id as cart_id',
-												'quote_table.updated_at as cart_updated_at',
-												'quote_table.abandoned_sale_notified as has_been_notified',
-												'quote_items.price as product_price_in_cart',
-												'quote_table.customer_email as customer_email',
-												'quote_table.customer_firstname as customer_firstname',
-												'quote_table.customer_lastname as customer_lastname'
+							// Database TableNams
+							$eavEntityType = Mage::getSingleton("core/resource")->getTableName('eav_entity_type');
+							$eavAttribute = Mage::getSingleton("core/resource")->getTableName('eav_attribute');
+							
+							// If flat catalog is enabled
+							if (Mage::helper('catalog/product_flat')->isEnabled()) 
+							{
+								// First collection: carts with products that became on sale
+								// Join the collection with the required tables
+								$collection->getSelect()
+									->reset(Zend_Db_Select::COLUMNS)
+									->columns(array('e.entity_id AS product_id',
+													'e.sku',
+													'catalog_flat.name as product_name',
+													'catalog_flat.price as product_price',
+													'catalog_flat.special_price as product_special_price',
+													'catalog_flat.special_from_date as product_special_from_date',
+													'catalog_flat.special_to_date as product_special_to_date',
+													'quote_table.entity_id as cart_id',
+													'quote_table.updated_at as cart_updated_at',
+													'quote_table.abandoned_sale_notified as has_been_notified',
+													'quote_items.price as product_price_in_cart',
+													'quote_table.customer_email as customer_email',
+													'quote_table.customer_firstname as customer_firstname',
+													'quote_table.customer_lastname as customer_lastname'
+													)
 												)
-											)
-								->joinInner(
-									array('quote_items' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote_item')),
-									'quote_items.product_id = e.entity_id AND quote_items.price > 0.00',
-									null)
-								->joinInner(
-									array('quote_table' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote')),
-									'quote_items.quote_id = quote_table.entity_id AND quote_table.items_count > 0 AND quote_table.is_active = 1 AND quote_table.customer_email IS NOT NULL AND quote_table.abandoned_sale_notified = 0 AND quote_table.store_id = '.$storeId,
-									null)
-								->joinInner(
-									array('catalog_flat' => Mage::getSingleton("core/resource")->getTableName('catalog_product_flat_'.$storeId)),
-									'catalog_flat.entity_id = e.entity_id',
-									null)
-								->joinInner(
-									array('catalog_enabled'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_int')),
-									'catalog_enabled.entity_id = e.entity_id AND catalog_enabled.attribute_id = '.$statusId.' AND catalog_enabled.value = 1',
-									null)
-								->joinInner(
-									array('inventory' => Mage::getSingleton("core/resource")->getTableName('cataloginventory_stock_status')),
-									'inventory.product_id = e.entity_id AND inventory.stock_status = 1 AND inventory.website_id = '.$websiteId,
-									null)
-								->order('quote_table.updated_at DESC');
+									->joinInner(
+										array('quote_items' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote_item')),
+										'quote_items.product_id = e.entity_id AND quote_items.price > 0.00',
+										null)
+									->joinInner(
+										array('quote_table' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote')),
+										'quote_items.quote_id = quote_table.entity_id AND quote_table.items_count > 0 AND quote_table.is_active = 1 AND quote_table.customer_email IS NOT NULL AND quote_table.abandoned_sale_notified = 0 AND quote_table.store_id = '.$storeId,
+										null)
+									->joinInner(
+										array('catalog_flat' => Mage::getSingleton("core/resource")->getTableName('catalog_product_flat_'.$storeId)),
+										'catalog_flat.entity_id = e.entity_id',
+										null)
+									->joinInner(
+										array('catalog_enabled'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_int')),
+										'catalog_enabled.entity_id = e.entity_id AND catalog_enabled.attribute_id = '.$statusId.' AND catalog_enabled.value = 1',
+										null)
+									->joinInner(
+										array('inventory' => Mage::getSingleton("core/resource")->getTableName('cataloginventory_stock_status')),
+										'inventory.product_id = e.entity_id AND inventory.stock_status = 1 AND inventory.website_id = '.$websiteId,
+										null)
+									->order('quote_table.updated_at DESC');
+							}
+							else
+							{
+								// First collection: carts with products that became on sale
+								// Join the collection with the required tables
+								$collection->getSelect()
+									->reset(Zend_Db_Select::COLUMNS)
+									->columns(array('e.entity_id AS product_id',
+													'e.sku',
+													'catalog_name.value as product_name',
+													'catalog_price.value as product_price',
+													'catalog_sprice.value as product_special_price',
+													'catalog_spfrom.value as product_special_from_date',
+													'catalog_spto.value as product_special_to_date',
+													'quote_table.entity_id as cart_id',
+													'quote_table.updated_at as cart_updated_at',
+													'quote_table.abandoned_sale_notified as has_been_notified',
+													'quote_items.price as product_price_in_cart',
+													'quote_table.customer_email as customer_email',
+													'quote_table.customer_firstname as customer_firstname',
+													'quote_table.customer_lastname as customer_lastname'
+													)
+												)
+									// Name
+									->joinInner(
+										array('catalog_name'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_varchar')),
+										"catalog_name.entity_id = e.entity_id AND catalog_name.attribute_id = $nameId",
+										null)
+									// Price
+									->joinInner(
+										array('catalog_price'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_decimal')),
+										"catalog_price.entity_id = e.entity_id AND catalog_price.attribute_id = $priceId",
+										null)
+									// Special Price
+									->joinInner(
+										array('catalog_sprice'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_decimal')),
+										"catalog_sprice.entity_id = e.entity_id AND catalog_sprice.attribute_id = $spriceId",
+										null)
+									// Special From Date
+									->joinInner(
+										array('catalog_spfrom'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_datetime')),
+										"catalog_spfrom.entity_id = e.entity_id AND catalog_spfrom.attribute_id = $spfromId",
+										null)
+									// Special To Date
+									->joinInner(
+										array('catalog_spto'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_datetime')),
+										"catalog_spto.entity_id = e.entity_id AND catalog_spto.attribute_id = $sptoId",
+										null)
+									->joinInner(
+										array('quote_items' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote_item')),
+										'quote_items.product_id = e.entity_id AND quote_items.price > 0.00',
+										null)
+									->joinInner(
+										array('quote_table' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote')),
+										'quote_items.quote_id = quote_table.entity_id AND quote_table.items_count > 0 AND quote_table.is_active = 1 AND quote_table.customer_email IS NOT NULL AND quote_table.abandoned_sale_notified = 0 AND quote_table.store_id = '.$storeId,
+										null)
+									->joinInner(
+										array('catalog_enabled'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_int')),
+										'catalog_enabled.entity_id = e.entity_id AND catalog_enabled.attribute_id = '.$statusId.' AND catalog_enabled.value = 1',
+										null)
+									->joinInner(
+										array('inventory' => Mage::getSingleton("core/resource")->getTableName('cataloginventory_stock_status')),
+										'inventory.product_id = e.entity_id AND inventory.stock_status = 1 AND inventory.website_id = '.$websiteId,
+										null)
+									->order('quote_table.updated_at DESC');
+							}
 													
-							//echo $collection->printlogquery(true);
+							//$collection->printlogquery(true,true);
 							$collection->load();
 							
 							// Skip the rest of the code if the collection is empty
-							if ($collection->getSize() == 0)
-							{
-								continue;
-							}
+							if ($collection->getSize() == 0)    continue;
 							
 							// Call iterator walk method with collection query string and callback method as parameters
 							// Has to be used to handle massive collection instead of foreach
@@ -382,12 +517,13 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			Mage::helper('abandonedcarts')->log(__METHOD__ . " " . $e->getMessage());
 		}
 	}
-	
-	/**
-	 * Send notification email to customer with abandoned carts after the number of days specified in the config
-	 * @param boolean if dryrun is set to true, it won't send emails and won't alter quotes
-	 * @param string email to test
-	 */
+
+    /**
+     * Send notification email to customer with abandoned carts after the number of days specified in the config
+     * @param bool $nodate
+     * @param boolean $dryrun if dryrun is set to true, it won't send emails and won't alter quotes
+     * @param string $testemail email to test
+     */
 	public function sendAbandonedCartsEmail($nodate = false, $dryrun = false, $testemail = null)
 	{
 		if (Mage::helper('abandonedcarts')->getDryRun()) $dryrun = true;
@@ -414,9 +550,11 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 					$delay = date('Y-m-d H:i:s', strtotime("+7 day"));
 				}
 				
-				// Get the attribute id for the status attribute
+				// Get the attribute id for several attributes
 				$eavAttribute = Mage::getModel('eav/entity_attribute');
 				$statusId = $eavAttribute->getIdByCode('catalog_product', 'status');
+				$nameId = $eavAttribute->getIdByCode('catalog_product', 'name');
+				$priceId = $eavAttribute->getIdByCode('catalog_product', 'price');
 				
 				// Loop through the stores
 				foreach (Mage::app()->getWebsites() as $website) {
@@ -434,45 +572,95 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 							// Get the product collection
 							$collection = Mage::getResourceModel('catalog/product_collection')->setStore($storeId);
 							
-							// First collection: carts with products that became on sale
-							// Join the collection with the required tables
-							$collection->getSelect()
-								->reset(Zend_Db_Select::COLUMNS)
-								->columns(array('e.entity_id AS product_id',
-												'e.sku',
-												'catalog_flat.name as product_name',
-												'catalog_flat.price as product_price',
-												'quote_table.entity_id as cart_id',
-												'quote_table.updated_at as cart_updated_at',
-												'quote_table.abandoned_notified as has_been_notified',
-												'quote_table.customer_email as customer_email',
-												'quote_table.customer_firstname as customer_firstname',
-												'quote_table.customer_lastname as customer_lastname'
+							// If flat catalog is enabled
+							if (Mage::helper('catalog/product_flat')->isEnabled()) 
+							{
+								// First collection: carts with products that became on sale
+								// Join the collection with the required tables
+								$collection->getSelect()
+									->reset(Zend_Db_Select::COLUMNS)
+									->columns(array('e.entity_id AS product_id',
+													'e.sku',
+													'catalog_flat.name as product_name',
+													'catalog_flat.price as product_price',
+													'quote_table.entity_id as cart_id',
+													'quote_table.updated_at as cart_updated_at',
+													'quote_table.abandoned_notified as has_been_notified',
+													'quote_table.customer_email as customer_email',
+													'quote_table.customer_firstname as customer_firstname',
+													'quote_table.customer_lastname as customer_lastname'
+													)
 												)
-											)
-								->joinInner(
-									array('quote_items' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote_item')),
-									'quote_items.product_id = e.entity_id AND quote_items.price > 0.00',
-									null)
-								->joinInner(
-									array('quote_table' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote')),
-									'quote_items.quote_id = quote_table.entity_id AND quote_table.items_count > 0 AND quote_table.is_active = 1 AND quote_table.customer_email IS NOT NULL AND quote_table.abandoned_notified = 0 AND quote_table.updated_at < "'.$delay.'" AND quote_table.store_id = '.$storeId,
-									null)
-								->joinInner(
-									array('catalog_flat' => Mage::getSingleton("core/resource")->getTableName('catalog_product_flat_'.$storeId)),
-									'catalog_flat.entity_id = e.entity_id',
-									null)
-								->joinInner(
-									array('catalog_enabled'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_int')),
-									'catalog_enabled.entity_id = e.entity_id AND catalog_enabled.attribute_id = '.$statusId.' AND catalog_enabled.value = 1',
-									null)
-								->joinInner(
-									array('inventory' => Mage::getSingleton("core/resource")->getTableName('cataloginventory_stock_status')),
-									'inventory.product_id = e.entity_id AND inventory.stock_status = 1 AND website_id = '.$websiteId,
-									null)
-								->order('quote_table.updated_at DESC');
+									->joinInner(
+										array('quote_items' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote_item')),
+										'quote_items.product_id = e.entity_id AND quote_items.price > 0.00',
+										null)
+									->joinInner(
+										array('quote_table' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote')),
+										'quote_items.quote_id = quote_table.entity_id AND quote_table.items_count > 0 AND quote_table.is_active = 1 AND quote_table.customer_email IS NOT NULL AND quote_table.abandoned_notified = 0 AND quote_table.updated_at < "'.$delay.'" AND quote_table.store_id = '.$storeId,
+										null)
+									->joinInner(
+										array('catalog_flat' => Mage::getSingleton("core/resource")->getTableName('catalog_product_flat_'.$storeId)),
+										'catalog_flat.entity_id = e.entity_id',
+										null)
+									->joinInner(
+										array('catalog_enabled'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_int')),
+										'catalog_enabled.entity_id = e.entity_id AND catalog_enabled.attribute_id = '.$statusId.' AND catalog_enabled.value = 1',
+										null)
+									->joinInner(
+										array('inventory' => Mage::getSingleton("core/resource")->getTableName('cataloginventory_stock_status')),
+										'inventory.product_id = e.entity_id AND inventory.stock_status = 1 AND website_id = '.$websiteId,
+										null)
+									->order('quote_table.updated_at DESC');
+							}
+							else
+							{
+								// First collection: carts with products that became on sale
+								// Join the collection with the required tables
+								$collection->getSelect()
+									->reset(Zend_Db_Select::COLUMNS)
+									->columns(array('e.entity_id AS product_id',
+													'e.sku',
+													'catalog_name.value as product_name',
+													'catalog_price.value as product_price',
+													'quote_table.entity_id as cart_id',
+													'quote_table.updated_at as cart_updated_at',
+													'quote_table.abandoned_notified as has_been_notified',
+													'quote_table.customer_email as customer_email',
+													'quote_table.customer_firstname as customer_firstname',
+													'quote_table.customer_lastname as customer_lastname'
+													)
+												)
+									// Name
+									->joinInner(
+										array('catalog_name'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_varchar')),
+										"catalog_name.entity_id = e.entity_id AND catalog_name.attribute_id = $nameId",
+										null)
+									// Price
+									->joinInner(
+										array('catalog_price'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_decimal')),
+										"catalog_price.entity_id = e.entity_id AND catalog_price.attribute_id = $priceId",
+										null)
+									->joinInner(
+										array('quote_items' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote_item')),
+										'quote_items.product_id = e.entity_id AND quote_items.price > 0.00',
+										null)
+									->joinInner(
+										array('quote_table' => Mage::getSingleton("core/resource")->getTableName('sales_flat_quote')),
+										'quote_items.quote_id = quote_table.entity_id AND quote_table.items_count > 0 AND quote_table.is_active = 1 AND quote_table.customer_email IS NOT NULL AND quote_table.abandoned_notified = 0 AND quote_table.updated_at < "'.$delay.'" AND quote_table.store_id = '.$storeId,
+										null)
+									->joinInner(
+										array('catalog_enabled'	=>	Mage::getSingleton("core/resource")->getTableName('catalog_product_entity_int')),
+										'catalog_enabled.entity_id = e.entity_id AND catalog_enabled.attribute_id = '.$statusId.' AND catalog_enabled.value = 1',
+										null)
+									->joinInner(
+										array('inventory' => Mage::getSingleton("core/resource")->getTableName('cataloginventory_stock_status')),
+										'inventory.product_id = e.entity_id AND inventory.stock_status = 1 AND website_id = '.$websiteId,
+										null)
+									->order('quote_table.updated_at DESC');
+							}
 							
-							// echo $collection->printlogquery(true);
+							//$collection->printlogquery(true,true);
 							$collection->load();
 							
 							// Call iterator walk method with collection query string and callback method as parameters
