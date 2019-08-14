@@ -308,7 +308,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				else
 				{
 					Mage::helper('abandonedcarts')->log(__METHOD__ . "sendAbandonedCartsEmail: " . $email);
-					
+
 					// Send the email
 					Mage::getModel('core/email_template')
 							->sendTransactional(
@@ -319,13 +319,13 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 									$recipient['emailTemplateVariables'],
 									null);
 				}
-				
+
 				// Load the quote
 				$quote = Mage::getModel('sales/quote')->load($recipient['cartId']);
 
 				// We change the notification attribute
 				$quote->setAbandonedNotified(1);
-				
+
 				// Save only if dryrun is false or if the test email is set and found
 				if (!$dryrun || (isset($testemail) && $email == $testemail))
 				{
@@ -504,12 +504,12 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 							// Call iterator walk method with collection query string and callback method as parameters
 							// Has to be used to handle massive collection instead of foreach
 							Mage::getSingleton('core/resource_iterator')->walk($collection->getSelect(), array(array($this, 'generateSaleRecipients')));
-							
-							// Send the emails
-							$this->sendSaleEmails($dryrun,$testemail);
 						}
 					}
 				}
+
+				// Send the emails
+				$this->sendSaleEmails($dryrun,$testemail);
 			}
 		}
 		catch (Exception $e)
@@ -666,12 +666,12 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 							// Call iterator walk method with collection query string and callback method as parameters
 							// Has to be used to handle massive collection instead of foreach
 							Mage::getSingleton('core/resource_iterator')->walk($collection->getSelect(), array(array($this, 'generateRecipients')));
-							
-							// Send the emails
-							$this->sendEmails($dryrun,$testemail);
 						}
 					}
 				}
+
+				// Send the emails
+				$this->sendEmails($dryrun,$testemail);
 			}
 		}
 		catch (Exception $e)
