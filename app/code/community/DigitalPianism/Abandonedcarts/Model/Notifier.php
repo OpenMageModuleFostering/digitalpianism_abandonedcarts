@@ -108,7 +108,7 @@ class DigitalPianism_Abandonedcarts_Model_Notifier extends Mage_Core_Model_Abstr
 		// Add attributes to the collection
 		$_productCollection->addAttributeToFilter('entity_id',array('eq' => $productId));
 		// Add image to the collection
-		$_productCollection->joinAttribute('small_image', 'catalog_product/image', 'entity_id', null, 'left');
+		$_productCollection->addAttributeToSelect('small_image');
 		// Limit the collection to get the specific product
 		$_productCollection->setPageSize(1);
 
