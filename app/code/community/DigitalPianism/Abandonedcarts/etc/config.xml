@@ -4,20 +4,20 @@
 
     <modules>
         <DigitalPianism_Abandonedcarts>
-            <version>0.2.1</version>
+            <version>0.2.2</version>
         </DigitalPianism_Abandonedcarts>
     </modules>
 	
 	<admin>
         <routers>
-		
-            <abandonedcarts_admin>
-				<use>admin</use>
+
+			<adminhtml>
 				<args>
-					<module>DigitalPianism_Abandonedcarts</module>
-					<frontName>abandonedcarts_admin</frontName>
+					<modules>
+						<DigitalPianism_Abandonedcarts before="Mage_Adminhtml">DigitalPianism_Abandonedcarts_Adminhtml</DigitalPianism_Abandonedcarts>
+					</modules>
 				</args>
-            </abandonedcarts_admin>	
+			</adminhtml>
 			
         </routers>
 	</admin>

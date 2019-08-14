@@ -32,7 +32,7 @@ class DigitalPianism_Abandonedcarts_Block_Adminhtml_System_Config_Form_Button ex
      */
     public function getAjaxCheckUrl()
     {
-        return Mage::helper('adminhtml')->getUrl('abandonedcarts_admin/adminhtml_abandonedcarts/send');
+        return Mage::helper('adminhtml')->getUrl('adminhtml/abandonedcarts/send');
     }
  
     /**
