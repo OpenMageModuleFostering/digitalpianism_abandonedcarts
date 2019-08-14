@@ -69,7 +69,7 @@
 							<show_in_website>1</show_in_website>
 							<show_in_store>1</show_in_store>
 						</email_template>
-						<notify_delay translate="label">
+						<notify_delay translate="label comment">
 							<label>Send Abandoned Cart Email After</label>
 							<frontend_type>text</frontend_type>
 							<validate>validate-not-negative-number</validate>
@@ -97,7 +97,16 @@
 							<show_in_website>1</show_in_website>
 							<show_in_store>1</show_in_store>
 						</email_template_sale>
-						<dryrun translate="label">
+						<customer_groups translate="label">
+							<label>Customer Groups Restriction</label>
+							<frontend_type>multiselect</frontend_type>
+							<source_model>adminhtml/system_config_source_customer_group_multiselect</source_model>
+							<sort_order>75</sort_order>
+							<show_in_default>1</show_in_default>
+							<show_in_website>1</show_in_website>
+							<show_in_store>1</show_in_store>
+						</customer_groups>
+						<dryrun translate="label comment">
 							<label>Dry Run</label>
 							<frontend_type>select</frontend_type>
                             <source_model>adminhtml/system_config_source_yesno</source_model>
@@ -107,7 +116,7 @@
 							<show_in_store>1</show_in_store>
 							<comment>Setting this parameter to Yes will log all the email addresses supposed to receive a notification into the var/log/digitalpianism_abandonedcarts.log file and will not send the real email notification</comment>
 						</dryrun>
-						<testemail translate="label">
+						<testemail translate="label comment">
 							<label>Test Email</label>
 							<frontend_type>text</frontend_type>
 							<sort_order>90</sort_order>

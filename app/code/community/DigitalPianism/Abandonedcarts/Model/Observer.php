@@ -6,11 +6,12 @@
 class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstract
 {
 
-	protected $recipients = array();
-	protected $saleRecipients = array();
-	protected $today = "";
-	
-	public function setToday()
+	protected $_recipients = array();
+	protected $_saleRecipients = array();
+	protected $_today = "";
+	protected $_customerGroups = "";
+
+	protected function _setToday()
 	{
 		// Date handling	
 		$store = Mage_Core_Model_App::ADMIN_STORE_ID;
@@ -31,31 +32,31 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 
 		date_default_timezone_set($timezone);
 
-		$this->today = $today->toString("Y-MM-dd HH:mm:ss");
+		$this->_today = $today->toString("Y-MM-dd HH:mm:ss");
 	}
 
     /**
      * @return string
      */
-    public function getToday()
+    protected function _getToday()
 	{
-		return $this->today;
+		return $this->_today;
 	}
 
     /**
      * @return array
      */
-    public function getRecipients()
+    protected function _getRecipients()
 	{
-		return $this->recipients;
+		return $this->_recipients;
 	}
 
     /**
      * @return array
      */
-    public function getSaleRecipients()
+    protected function _getSaleRecipients()
 	{
-		return $this->saleRecipients;
+		return $this->_saleRecipients;
 	}
 
     /**
@@ -63,8 +64,14 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
      */
     public function generateRecipients($args)
 	{
+		// Customer group check
+		if (array_key_exists('customer_group',$args['row']) && !in_array($args['row']['customer_group'],$this->_customerGroups))
+		{
+			return;
+		}
+
 		// Test if the customer is already in the array
-		if (!array_key_exists($args['row']['customer_email'], $this->recipients))
+		if (!array_key_exists($args['row']['customer_email'], $this->_recipients))
 		{
 			// Create an array of variables to assign to template 
 			$emailTemplateVariables = array(); 
@@ -75,7 +82,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			$emailTemplateVariables['productname'] = $args['row']['product_name'];
 					
 			// Assign the values to the array of recipients
-			$this->recipients[$args['row']['customer_email']]['cartId'] = $args['row']['cart_id'];
+			$this->_recipients[$args['row']['customer_email']]['cartId'] = $args['row']['cart_id'];
 
 			// Get product image via collection
 			$_productCollection = Mage::getResourceModel('catalog/product_collection');
@@ -94,12 +101,12 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 		else
 		{
 			// We create some extra variables if there is several products in the cart
-			$emailTemplateVariables = $this->recipients[$args['row']['customer_email']]['emailTemplateVariables'];
+			$emailTemplateVariables = $this->_recipients[$args['row']['customer_email']]['emailTemplateVariables'];
 			// We increase the product count
 			$emailTemplateVariables['extraproductcount'] += 1;
 		}
 		// Assign the array of template variables
-		$this->recipients[$args['row']['customer_email']]['emailTemplateVariables'] = $emailTemplateVariables;
+		$this->_recipients[$args['row']['customer_email']]['emailTemplateVariables'] = $emailTemplateVariables;
 	}
 
     /**
@@ -107,18 +114,24 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
      */
     public function generateSaleRecipients($args)
 	{
+		// Customer group check
+		if (array_key_exists('customer_group',$args['row']) && !in_array($args['row']['customer_group'],$this->_customerGroups))
+		{
+			return;
+		}
+
 		// Double check if the special from date is set
 		if (!array_key_exists('product_special_from_date',$args['row']) || !$args['row']['product_special_from_date'])
 		{
 			// If not we use today for the comparison
-			$fromDate = $this->getToday();
+			$fromDate = $this->_getToday();
 		}
 		else $fromDate = $args['row']['product_special_from_date'];
 		
 		// Do the same for the special to date
 		if (!array_key_exists('product_special_to_date',$args['row']) || !$args['row']['product_special_to_date'])
 		{
-			$toDate = $this->getToday();
+			$toDate = $this->_getToday();
 		}
 		else $toDate = $args['row']['product_special_to_date'];
 		
@@ -127,12 +140,12 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 		if ($args['row']['product_price_in_cart'] > 0.00 
 			&& $args['row']['product_special_price'] > 0.00 
 			&& ($args['row']['product_price_in_cart'] > $args['row']['product_special_price'])
-			&& ($fromDate <= $this->getToday())
-			&& ($toDate >= $this->getToday()))
+			&& ($fromDate <= $this->_getToday())
+			&& ($toDate >= $this->_getToday()))
 		{
 			
 			// Test if the customer is already in the array
-			if (!array_key_exists($args['row']['customer_email'], $this->saleRecipients))
+			if (!array_key_exists($args['row']['customer_email'], $this->_saleRecipients))
 			{
 				// Create an array of variables to assign to template 
 				$emailTemplateVariables = array(); 
@@ -145,7 +158,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				$emailTemplateVariables['specialprice'] = number_format($args['row']['product_special_price'],2);
 				
 				// Assign the values to the array of recipients
-				$this->saleRecipients[$args['row']['customer_email']]['cartId'] = $args['row']['cart_id'];
+				$this->_saleRecipients[$args['row']['customer_email']]['cartId'] = $args['row']['cart_id'];
 
 				// Get product image via collection
 				$_productCollection = Mage::getResourceModel('catalog/product_collection');
@@ -162,7 +175,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			else
 			{
 				// We create some extra variables if there is several products in the cart
-				$emailTemplateVariables = $this->saleRecipients[$args['row']['customer_email']]['emailTemplateVariables'];
+				$emailTemplateVariables = $this->_saleRecipients[$args['row']['customer_email']]['emailTemplateVariables'];
 				// Discount amount
 				// If one product before
 				if (!array_key_exists('discount',$emailTemplateVariables))
@@ -189,7 +202,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			}
 	
 			// Assign the array of template variables
-			$this->saleRecipients[$args['row']['customer_email']]['emailTemplateVariables'] = $emailTemplateVariables;
+			$this->_saleRecipients[$args['row']['customer_email']]['emailTemplateVariables'] = $emailTemplateVariables;
 		}
 	}
 
@@ -197,7 +210,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
      * @param $dryrun
      * @param $testemail
      */
-    public function sendSaleEmails($dryrun,$testemail)
+    protected function _sendSaleEmails($dryrun,$testemail)
 	{
 		try
 		{			
@@ -209,7 +222,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
 			
 			// Send the emails via a loop
-			foreach ($this->getSaleRecipients() as $email => $recipient)
+			foreach ($this->_getSaleRecipients() as $email => $recipient)
 			{
 				// Don't send the email if dryrun is set
 				if ($dryrun)
@@ -270,7 +283,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
      * @param $dryrun
      * @param $testemail
      */
-    public function sendEmails($dryrun,$testemail)
+    protected function _sendEmails($dryrun,$testemail)
 	{
 		try
 		{		
@@ -282,7 +295,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 			$sender['name'] = Mage::getStoreConfig('abandonedcartsconfig/options/name');
 			
 			// Send the emails via a loop
-			foreach ($this->getRecipients() as $email => $recipient)
+			foreach ($this->_getRecipients() as $email => $recipient)
 			{
 				// Don't send the email if dryrun is set
 				if ($dryrun)
@@ -350,9 +363,12 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 		{
 			if (Mage::helper('abandonedcarts')->getDryRun()) $dryrun = true;
 			if (Mage::helper('abandonedcarts')->getTestEmail()) $testemail = Mage::helper('abandonedcarts')->getTestEmail();
+			// Set customer groups
+			$this->_customerGroups = $this->_customerGroups ? $this->_customerGroups : Mage::helper('abandonedcarts')->getCustomerGroupsLimitation();
+
 			if (Mage::helper('abandonedcarts')->isSaleEnabled())
 			{
-				$this->setToday();
+				$this->_setToday();
 				
 				// Get the attribute id for the status attribute
 				$eavAttribute = Mage::getModel('eav/entity_attribute');
@@ -404,7 +420,8 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 													'quote_items.price as product_price_in_cart',
 													'quote_table.customer_email as customer_email',
 													'quote_table.customer_firstname as customer_firstname',
-													'quote_table.customer_lastname as customer_lastname'
+													'quote_table.customer_lastname as customer_lastname',
+													'quote_table.customer_group_id as customer_group'
 													)
 												)
 									->joinInner(
@@ -448,7 +465,8 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 													'quote_items.price as product_price_in_cart',
 													'quote_table.customer_email as customer_email',
 													'quote_table.customer_firstname as customer_firstname',
-													'quote_table.customer_lastname as customer_lastname'
+													'quote_table.customer_lastname as customer_lastname',
+													'quote_table.customer_group_id as customer_group'
 													)
 												)
 									// Name
@@ -509,7 +527,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				}
 
 				// Send the emails
-				$this->sendSaleEmails($dryrun,$testemail);
+				$this->_sendSaleEmails($dryrun,$testemail);
 			}
 		}
 		catch (Exception $e)
@@ -528,6 +546,9 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 	{
 		if (Mage::helper('abandonedcarts')->getDryRun()) $dryrun = true;
 		if (Mage::helper('abandonedcarts')->getTestEmail()) $testemail = Mage::helper('abandonedcarts')->getTestEmail();
+		// Set customer groups
+		$this->_customerGroups = $this->_customerGroups ? $this->_customerGroups : Mage::helper('abandonedcarts')->getCustomerGroupsLimitation();
+
 		try
 		{
 			if (Mage::helper('abandonedcarts')->isEnabled())
@@ -588,7 +609,8 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 													'quote_table.abandoned_notified as has_been_notified',
 													'quote_table.customer_email as customer_email',
 													'quote_table.customer_firstname as customer_firstname',
-													'quote_table.customer_lastname as customer_lastname'
+													'quote_table.customer_lastname as customer_lastname',
+													'quote_table.customer_group_id as customer_group'
 													)
 												)
 									->joinInner(
@@ -628,7 +650,8 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 													'quote_table.abandoned_notified as has_been_notified',
 													'quote_table.customer_email as customer_email',
 													'quote_table.customer_firstname as customer_firstname',
-													'quote_table.customer_lastname as customer_lastname'
+													'quote_table.customer_lastname as customer_lastname',
+													'quote_table.customer_group_id as customer_group'
 													)
 												)
 									// Name
@@ -671,7 +694,7 @@ class DigitalPianism_Abandonedcarts_Model_Observer extends Mage_Core_Model_Abstr
 				}
 
 				// Send the emails
-				$this->sendEmails($dryrun,$testemail);
+				$this->_sendEmails($dryrun,$testemail);
 			}
 		}
 		catch (Exception $e)

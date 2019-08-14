@@ -47,5 +47,13 @@ class DigitalPianism_Abandonedcarts_Helper_Data extends Mage_Core_Helper_Abstrac
 	{
 		return Mage::getStoreConfig('abandonedcartsconfig/options/testemail');
 	}
-    
+
+    /**
+     * @return mixed
+     */
+    public function getCustomerGroupsLimitation()
+	{
+		return explode(',',Mage::getStoreConfig('abandonedcartsconfig/options/customer_groups'));
+	}
+
 }

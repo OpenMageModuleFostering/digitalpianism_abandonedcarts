@@ -4,7 +4,7 @@
 
     <modules>
         <DigitalPianism_Abandonedcarts>
-            <version>0.2.3</version>
+            <version>0.3.0</version>
         </DigitalPianism_Abandonedcarts>
     </modules>
 	
@@ -131,6 +131,7 @@
 				<notify_delay>20</notify_delay>
 				<email_template>abandonedcartsconfig_options_email_template</email_template>
 				<email_template_sale>abandonedcartsconfig_options_email_template_sale</email_template_sale>
+				<customer_groups>1,2,3</customer_groups>
 			</options>
 		</abandonedcartsconfig>
 	</default>
