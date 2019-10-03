@@ -1,7 +1,7 @@
 {
-    "name": "OpenMageModuleFostering\/DigitalPianism_Abandonedcarts",
+    "name": "openmage-module-fostering\/digitalpianism_abandonedcarts",
     "type": "magento-module",
-    "license": "OSL-v3.0",
+    "license": "OSL-3.0",
     "homepage": "",
     "description": "Adds the possibility to notify customers with abandoned carts.",
     "authors": [
